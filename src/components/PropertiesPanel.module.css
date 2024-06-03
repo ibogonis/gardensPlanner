@@ -1,0 +1,20 @@
+.panel {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .properties {
+    margin-top: 10px;
+  }
+  
+  .key {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    align-items: center;
+    height: 25px;
+  }
+
+  
+  

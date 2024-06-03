@@ -1,0 +1,29 @@
+.canvas {
+  border: 1px solid black;
+  width: calc(100% - 250px);
+  position: relative;
+  margin: 1rem;
+  height: 100%;
+}
+.buttons {
+    display: flex;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.buttons button {
+    margin: 4px;
+    height: 30px;
+    cursor: pointer;
+    transition: all 0.25s ease-in;
+    z-index: 10;
+    padding: 0 8px;
+    border-radius: 4px;
+  }
+
+  .planProperties input{
+    margin: 4px;
+    height: 30px;
+    padding: 0 8px;
+  }

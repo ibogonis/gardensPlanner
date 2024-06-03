@@ -1,0 +1,81 @@
+
+.scheme h2 {
+    text-align: right;
+    margin: 0 10% 0 10px;
+}
+h2 span {
+    color: #82B769;
+}
+.flex {
+    display: flex; /* displays flex-items (children) inline */
+    flex-wrap: wrap; /* enables their wrapping */
+    margin: 0 40px;
+  }
+  
+  .flex > div {
+    flex-basis: calc(50% - 20px); /* initial width set to 50% of the parent's - left & right margins */
+    height: 150px;
+    margin: 0 10px; /* preferably top & bottom margins set to zero to keep calculations simple */
+    position: relative;
+    box-sizing: border-box; /* because of the borders, also recommended in general */
+    color: white;
+    background-color: #82B769;
+    border: 1px solid #82B769;
+    border-radius: 5px;
+}
+  
+  .flex > div:nth-child(2){
+    margin-top: 55px; /* half of divs height + half of the desired gap between them; modification affects all but the first div */
+  }
+  .flex > div:nth-child(2) > .yellowCircle {
+    right: -25px;
+  }
+  
+  .flex > div:nth-child(odd):not(:first-child){
+    margin-top: -35px; /* - half of divs height + half of the desired gap between them, so in this case the gap is 10px (2 x 5px); modification affects all but the first odd div (if ofc. modification is "")  */
+  }
+  .flex > div:nth-child(odd):not(:first-child) > .yellowCircle {
+    left: -25px;
+  }
+
+  .flex > div:first-child > .yellowCircle {
+    left: -25px;
+  }
+  
+  .flex > div:nth-child(even):not(:nth-child(2)){
+    margin-top: 20px; /* gap size; modification affects all but the first three divs */
+  }
+  .flex > div:nth-child(even):not(:nth-child(2)) > .yellowCircle {
+    right: -25px;
+  }
+  .flex > div > p {
+    padding: 20px 30px;
+  }
+
+  .scheme .yellowCircle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50px;
+    background-color: #E8E138;
+    position: absolute;
+      top: 25px;
+      
+  }
+  .titleCircle {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  .titleCircle .yellow {
+    width: 36px;
+    height: 36px;
+    background-color: #E8E138;
+    border-radius: 18px;
+    margin-top: 5px;
+  }
+  
+  @media (max-width: 600px){
+    .flex {flex-direction: column} /* stacks flex-items vertically */
+    .flex > div {flex-basis: auto} /* initial width set to default or 100% */
+    .flex > div:not(:first-child) {margin-top: 10px !important}
+  }
