@@ -1,0 +1,28 @@
+trigger:
+  - master
+
+pool:
+  vmImage: "ubuntu-latest"
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "14.x"
+    displayName: "Install Node.js"
+
+  - script: |
+      npm install
+      npm run build
+    displayName: "Install dependencies and build"
+
+  - task: CopyFiles@2
+    inputs:
+      contents: "build/**/*"
+      targetFolder: "$(Build.ArtifactStagingDirectory)"
+    displayName: "Copy files to artifact staging directory"
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: "$(Build.ArtifactStagingDirectory)"
+      ArtifactName: "drop"
+    displayName: "Publish build artifacts"
