@@ -2,7 +2,11 @@ import React, { useRef, useEffect, useCallback } from "react";
 import { Circle as KonvaCircle, Transformer } from "react-konva";
 
 import { LIMITS } from "../data/constants";
-import { selectShape, transformCircleShape, moveShape } from "../state";
+import {
+  selectShape,
+  transformCircleShape,
+  moveShape,
+} from "../state/stateCanvas";
 
 const boundBoxCallbackForCircle = (oldBox, newBox) => {
   // limit resize

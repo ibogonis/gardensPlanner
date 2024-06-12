@@ -7,11 +7,11 @@ import {
   clearSelection,
   createCircle,
   createRectangle,
-  saveDiagram,
   reset,
   setNamePlan,
   setYearPlan,
-} from "../state";
+} from "../state/stateCanvas";
+import { addSavedPlan, getSavedPlans } from "../state/history";
 import { DRAG_DATA_KEY, SHAPE_TYPES } from "../data/constants";
 import { Shape } from "./Shape";
 
@@ -57,6 +57,19 @@ export default function Canvas() {
     const value = event.target.value;
     setYearPlan(value);
   };
+  const handleSave = () => {
+    const plan = JSON.parse(localStorage.getItem("__integrtr_diagrams__"));
+    console.log(plan);
+    if (!plan || !plan.shapes || Object.keys(plan.shapes).length === 0) {
+      console.log("No shapes to save.");
+      return;
+    } else {
+      addSavedPlan(plan);
+    }
+
+    const result = getSavedPlans();
+    console.log("result", result);
+  };
 
   return (
     <div
@@ -84,7 +97,7 @@ export default function Canvas() {
         />
       </div>
       <div className={styles.buttons}>
-        <button onClick={saveDiagram}>Save</button>
+        <button onClick={handleSave}>Save</button>
         <button onClick={reset}>Reset</button>
       </div>
       <Stage

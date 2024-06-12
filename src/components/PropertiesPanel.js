@@ -1,6 +1,11 @@
 import React, { useCallback } from "react";
 import styles from "./PropertiesPanel.module.css";
-import { useShapes, updateAttribute, deleteShape, selectShape } from "../state";
+import {
+  useShapes,
+  updateAttribute,
+  deleteShape,
+  selectShape,
+} from "../state/stateCanvas";
 import grow from "../data/grow.js";
 //const shapeSelector = (state) => state.shapes[state.selected];
 const shapeSelector = (state) => {
