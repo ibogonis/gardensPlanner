@@ -1,14 +1,15 @@
 export function HistoryTable() {
   return (
-    <>
-      <h4>History</h4>
-      <table>
+    <table>
+      <caption>History</caption>
+      <thead>
         <tr>
           <th>Year</th>
           <th>Name</th>
           <th>Image</th>
         </tr>
-      </table>
-    </>
+      </thead>
+      <tbody></tbody>
+    </table>
   );
 }
