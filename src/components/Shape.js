@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 
 import { SHAPE_TYPES } from "../data/constants";
-import { useShapes } from "../state";
+import { useShapes } from "../state/stateCanvas";
 import { Circle } from "./Circle";
 import { Rectangle } from "./Rectangle";
 
