@@ -3,7 +3,7 @@ import { produce } from "immer";
 import clamp from "clamp";
 import { nanoid } from "nanoid";
 
-import { SHAPE_TYPES, DEFAULTS, LIMITS } from "./data/constants";
+import { SHAPE_TYPES, DEFAULTS, LIMITS } from "../data/constants";
 
 const APP_NAMESPACE = "__integrtr_diagrams__";
 
@@ -17,7 +17,6 @@ const baseState = {
 export const useShapes = createStore(() => {
   const initialState = JSON.parse(localStorage.getItem(APP_NAMESPACE));
 
-  //return { ...baseState, shapes: initialState ?? {} };
   return initialState ? { ...baseState, ...initialState } : baseState;
 });
 const setState = (fn) => {
@@ -41,14 +40,6 @@ const saveState = () => {
   const state = useShapes.get();
   const { selected, ...stateToSave } = state;
   localStorage.setItem(APP_NAMESPACE, JSON.stringify(stateToSave));
-};
-
-export const saveDiagram = () => {
-  //const state = useShapes.get();
-  // const { selected, ...stateToSave } = state;
-  //localStorage.setItem(APP_NAMESPACE, JSON.stringify(stateToSave));
-  const plan = JSON.parse(localStorage.getItem(APP_NAMESPACE));
-  console.log(plan);
 };
 
 export const reset = () => {
