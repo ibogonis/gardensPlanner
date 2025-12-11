@@ -3,7 +3,8 @@ import woodenField from "../images/wooden-field.jpg";
 const articles = [
   {
     title: "Plan your next vegetable garden",
-    slug: "plan your next vegetable garden",
+    slug: "plan-your-next-vegetable-garden",
+    linkTo: "blog/plan-your-next-vegetable-garden",
     id: 1,
     text: "The best time to plan your next vegetable garden is when the previous year’s vegetable garden is still fresh on your mind.",
     shortDescr:
