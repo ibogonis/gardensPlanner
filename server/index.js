@@ -16,3 +16,6 @@ mongoose
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server started on ${PORT}`));
+
+const authRoutes = require("./routes/authRoutes");
+app.use("/api/auth", authRoutes);
