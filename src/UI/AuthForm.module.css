@@ -1,0 +1,86 @@
+.authForm {
+    font-family: 'Roboto', sans-serif;
+    width: 390px;
+    color: #999;
+    border-radius: 3px;
+    margin: 10px auto;
+    background: #f2f3f7;
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+    padding: 30px;
+
+    h2 {
+        color: #333;
+        font-weight: bold;
+        margin: 5px;
+    }
+
+    p {
+        font-size: 14px;
+        margin: 5px;
+        padding: 5px;
+    }
+
+    hr {
+        margin: 0 -30px 20px;
+    }
+
+    .formGroup {
+        margin-bottom: 20px;
+    }
+
+    .inputGroup {
+        position: relative;
+        width: 100%;
+    }
+
+    .inputGroup input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 12px 10px 52px;
+        /* місце для іконки */
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    .inputGroup input:focus {
+        border-color: var(--accent-color);
+        outline: none;
+    }
+
+    .inputGroupAddon {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 42px;
+        height: 100%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        pointer-events: none;
+    }
+
+    .inputGroupAddon::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 1px;
+        background: #ddd;
+    }
+
+    .icon {
+        font-size: 21px;
+    }
+
+    .inputGroup:focus-within .inputGroupAddon {
+        color: var(--accent-color);
+    }
+
+    .inputGroup:focus-within .inputGroupAddon::after {
+        background: var(--accent-color);
+    }
+}

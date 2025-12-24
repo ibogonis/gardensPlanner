@@ -1,17 +1,40 @@
-import Button from "./Button";
-import { useState } from "react";
 import { register } from "../services/authService";
+import AuthForm from "./AuthForm";
 
 export default function Register() {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const registerFields = [
+    {
+      name: "username",
+      type: "text",
+      placeholder: "Username",
+      icon: "fa fa-user",
+    },
+    {
+      name: "email",
+      type: "email",
+      placeholder: "Email",
+      icon: "fa fa-envelope",
+    },
+    {
+      name: "password",
+      type: "password",
+      placeholder: "Password",
+      icon: "fa fa-lock",
+    },
+  ];
 
-  async function submitHandler(e) {
-    e.preventDefault();
-    console.log("Registering with", { username, email, password });
+  async function submitHandler(formData) {
+    console.log("Registering with", {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+    });
     try {
-      const data = await register(username, email, password);
+      const data = await register(
+        formData.username,
+        formData.email,
+        formData.password
+      );
       console.log("Registration successful:", data);
       localStorage.setItem("token", data.token);
       console.log("Token saved!");
@@ -21,38 +44,11 @@ export default function Register() {
   }
 
   return (
-    <form onSubmit={submitHandler}>
-      <h2>Create Account</h2>
-      <div>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <Button textButton="Submit" />
-      </div>
-    </form>
+    <AuthForm
+      title="Register"
+      message="Please fill in this form to create an account!"
+      fields={registerFields}
+      onSubmit={submitHandler}
+    />
   );
 }

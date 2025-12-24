@@ -1,16 +1,30 @@
-import Button from "./Button";
-import { useState } from "react";
+//import { useState } from "react";
 import { login } from "../services/authService";
+import AuthForm from "./AuthForm";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const loginFields = [
+    {
+      name: "email",
+      type: "email",
+      placeholder: "Email",
+      icon: "fa fa-envelope",
+    },
+    {
+      name: "password",
+      type: "password",
+      placeholder: "Password",
+      icon: "fa fa-lock",
+    },
+  ];
 
-  async function submitHandler(e) {
-    e.preventDefault();
-    console.log("Logging in with", { email, password });
+  async function submitHandler(formData) {
+    console.log("Logging in with", {
+      email: formData.email,
+      password: formData.password,
+    });
     try {
-      const data = await login(email, password);
+      const data = await login(formData.email, formData.password);
       console.log("Login successful:", data);
       localStorage.setItem("token", data.token);
       console.log("Token saved!");
@@ -20,29 +34,11 @@ export default function Login() {
   }
 
   return (
-    <form onSubmit={submitHandler}>
-      <h2>Login</h2>
-      <div>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <Button textButton="Login" />
-      </div>
-    </form>
+    <AuthForm
+      title="Login"
+      message="Please enter your email and password to login."
+      fields={loginFields}
+      onSubmit={submitHandler}
+    />
   );
 }
