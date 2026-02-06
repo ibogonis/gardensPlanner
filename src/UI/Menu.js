@@ -1,7 +1,11 @@
+import { useContext } from "react";
 import { NavLink } from "react-router-dom";
 import logo from "../images/logo.png";
+import { AuthContext } from "../context/AuthContext";
+import SocialLoginButton from "./SocialLoginButton";
 
 export default function Menu() {
+  const { user } = useContext(AuthContext);
   return (
     <nav>
       <div className="logo">
@@ -22,6 +26,13 @@ export default function Menu() {
         <li>
           <NavLink to="contacts">Contact us</NavLink>
         </li>
+        {!user ? (
+          <li>
+            <SocialLoginButton provider="google" />
+          </li>
+        ) : (
+          <li>👋 {user.username}</li>
+        )}
       </ul>
     </nav>
   );
