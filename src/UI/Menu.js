@@ -1,11 +1,18 @@
 import { useContext } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../images/logo.png";
 import { AuthContext } from "../context/AuthContext";
-import SocialLoginButton from "./SocialLoginButton";
+import LogoutButton from "./LogoutButton";
+import Button from "./Button";
 
 export default function Menu() {
-  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const { user, logout } = useContext(AuthContext);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
   return (
     <nav>
       <div className="logo">
@@ -28,10 +35,17 @@ export default function Menu() {
         </li>
         {!user ? (
           <li>
-            <SocialLoginButton provider="google" />
+            <NavLink to="/login">
+              <Button type="button" textButton="Login" />
+            </NavLink>
           </li>
         ) : (
-          <li>👋 {user.username}</li>
+          <>
+            <li>Hi, {user.username}</li>
+            <li>
+              <LogoutButton onLogout={handleLogout} />
+            </li>
+          </>
         )}
       </ul>
     </nav>

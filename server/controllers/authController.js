@@ -36,3 +36,15 @@ exports.oauthSuccess = (req, res) => {
 
   res.redirect(process.env.CLIENT_URL);
 };
+
+exports.logout = (req, res) => {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  };
+
+  res.clearCookie("token", cookieOptions);
+  return res.status(200).json({ message: "Logged out successfully" });
+};

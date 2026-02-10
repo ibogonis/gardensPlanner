@@ -1,7 +1,7 @@
-export default function Button(props) {
+export default function Button({ textButton, ...buttonProps }) {
   return (
-    <button>
-      {props.textButton}
+    <button {...buttonProps}>
+      {textButton}
       <svg
         width="52"
         height="8"
