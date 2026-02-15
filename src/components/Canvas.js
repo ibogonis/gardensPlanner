@@ -2,74 +2,55 @@ import React, { useRef, useCallback } from "react";
 import { Layer, Stage, Text } from "react-konva";
 import styles from "./Canvas.module.css";
 
-import {
-  useShapes,
-  clearSelection,
-  createCircle,
-  createRectangle,
-  reset,
-  setNamePlan,
-  setYearPlan,
-} from "../state/stateCanvas";
-import { addSavedPlan, getSavedPlans } from "../state/history";
+import { useGardenStore } from "../state/useGardenStore";
 import { DRAG_DATA_KEY, SHAPE_TYPES } from "../data/constants";
 import { Shape } from "./Shape";
 
 const handleDragOver = (event) => event.preventDefault();
 
 export default function Canvas() {
-  const shapes = useShapes((state) => Object.entries(state.shapes));
-
   const stageRef = useRef();
 
-  const handleDrop = useCallback((event) => {
-    const draggedData = event.nativeEvent.dataTransfer.getData(DRAG_DATA_KEY);
+  const shapes = useGardenStore((state) => state.currentLayout.shapes);
+  const plantings = useGardenStore((state) => state.currentPlan.plantings);
+  const layoutName = useGardenStore((state) => state.currentLayout.name);
+  const year = useGardenStore((state) => state.currentPlan.year);
 
-    if (draggedData) {
+  const createRectangle = useGardenStore((state) => state.createRectangle);
+  const createCircle = useGardenStore((state) => state.createCircle);
+  const clearSelection = useGardenStore((state) => state.clearSelection);
+  const reset = useGardenStore((state) => state.reset);
+  const setLayoutName = useGardenStore((state) => state.setLayoutName);
+  const setYear = useGardenStore((state) => state.setYear);
+
+  const handleDrop = useCallback(
+    (event) => {
+      const draggedData = event.nativeEvent.dataTransfer.getData(DRAG_DATA_KEY);
+
+      if (!draggedData) return;
+
       const { offsetX, offsetY, type, clientHeight, clientWidth } =
         JSON.parse(draggedData);
 
       stageRef.current.setPointersPositions(event);
-
       const coords = stageRef.current.getPointerPosition();
 
       if (type === SHAPE_TYPES.RECT) {
-        // rectangle x, y is at the top,left corner
         createRectangle({
           x: coords.x - offsetX,
           y: coords.y - offsetY,
         });
-      } else if (type === SHAPE_TYPES.CIRCLE) {
-        // circle x, y is at the center of the circle
+      }
+
+      if (type === SHAPE_TYPES.CIRCLE) {
         createCircle({
           x: coords.x - (offsetX - clientWidth / 2),
           y: coords.y - (offsetY - clientHeight / 2),
         });
       }
-    }
-  }, []);
-
-  const handleNamePlan = (event) => {
-    const name = event.target.value;
-    setNamePlan(name);
-  };
-  const handleYearPlan = (event) => {
-    const value = event.target.value;
-    setYearPlan(value);
-  };
-  const handleSave = () => {
-    const plan = JSON.parse(localStorage.getItem("__integrtr_diagrams__"));
-    console.log(plan);
-    if (!plan || !plan.shapes || Object.keys(plan.shapes).length === 0) {
-      console.log("No shapes to save.");
-      return;
-    } else {
-      addSavedPlan(plan);
-    }
-
-    const result = getSavedPlans();
-    console.log("result", result);
-  };
+    },
+    [createRectangle, createCircle],
+  );
 
   return (
     <div
@@ -78,28 +59,28 @@ export default function Canvas() {
       onDragOver={handleDragOver}
     >
       <div className={styles.planProperties}>
-        <label htmlFor="nameForGarden">Name your garden</label>
+        <label>Name your garden</label>
         <input
           type="text"
-          id="nameForGarden"
-          placeholder="My garden"
-          onChange={handleNamePlan}
-        ></input>
-        <label htmlFor="year">Year</label>
+          value={layoutName}
+          onChange={(e) => setLayoutName(e.target.value)}
+        />
+
+        <label>Year</label>
         <input
           type="number"
-          id="year"
           min="2000"
           max="2099"
           step="1"
-          defaultValue="2024"
-          onChange={handleYearPlan}
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
         />
       </div>
+
       <div className={styles.buttons}>
-        <button onClick={handleSave}>Save</button>
         <button onClick={reset}>Reset</button>
       </div>
+
       <Stage
         ref={stageRef}
         width={window.innerWidth - 250}
@@ -107,25 +88,27 @@ export default function Canvas() {
         onClick={clearSelection}
       >
         <Layer>
-          {shapes.map(([key, shape]) => (
-            <React.Fragment key={key}>
-              <Shape key={key} shape={{ ...shape, id: key }} />
-              {shape.grow && (
+          {Object.entries(shapes).map(([id, shape]) => (
+            <React.Fragment key={id}>
+              <Shape shape={{ ...shape, id }} />
+
+              {plantings[id]?.crop && (
                 <Text
-                  key={shape.id + "text"}
-                  id={shape.id}
                   x={shape.x}
                   y={shape.y}
-                  text={shape.grow}
+                  text={plantings[id].crop}
                   fontSize={15}
                   fontFamily="Calibri"
                   fill="#000"
                   rotation={shape.rotation}
-                  width={shape.rotation === 0 ? shape.width : shape.height}
+                  width={
+                    shape.type === SHAPE_TYPES.RECT
+                      ? shape.width
+                      : shape.radius * 2
+                  }
                   padding={5}
                   align="center"
                   verticalAlign="middle"
-                  //draggable
                 />
               )}
             </React.Fragment>

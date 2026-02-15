@@ -9,8 +9,16 @@ import Login from "./pages/Login";
 import "./App.css";
 import MainLayout from "./layouts/MainLayout";
 import { AuthProvider } from "./context/AuthContext";
+import { useGardenStore } from "./state/useGardenStore";
+import { useEffect } from "react";
 
 function App() {
+  const hydrate = useGardenStore.persist.rehydrate;
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
   return (
     <AuthProvider>
       <BrowserRouter>
