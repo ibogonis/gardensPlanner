@@ -1,20 +1,18 @@
-import React, { useCallback } from "react";
-
+import React from "react";
 import { SHAPE_TYPES } from "../data/constants";
-import { useShapes } from "../state/stateCanvas";
+import { useGardenStore } from "../state/useGardenStore";
 import { Circle } from "./Circle";
 import { Rectangle } from "./Rectangle";
 
 export function Shape({ shape }) {
-  const isSelectedSelector = useCallback(
-    (state) => state.selected === shape.id,
-    [shape]
-  );
-  const isSelected = useShapes(isSelectedSelector);
+  const selectedId = useGardenStore((state) => state.selected);
+  const isSelected = selectedId === shape.id;
 
   if (shape.type === SHAPE_TYPES.RECT) {
     return <Rectangle {...shape} isSelected={isSelected} />;
-  } else if (shape.type === SHAPE_TYPES.CIRCLE) {
+  }
+
+  if (shape.type === SHAPE_TYPES.CIRCLE) {
     return <Circle {...shape} isSelected={isSelected} />;
   }
 

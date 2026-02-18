@@ -1,15 +1,9 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import { Circle as KonvaCircle, Transformer } from "react-konva";
-
+import { useGardenStore } from "../state/useGardenStore";
 import { LIMITS } from "../data/constants";
-import {
-  selectShape,
-  transformCircleShape,
-  moveShape,
-} from "../state/stateCanvas";
 
 const boundBoxCallbackForCircle = (oldBox, newBox) => {
-  // limit resize
   if (
     newBox.width < LIMITS.CIRCLE.MIN ||
     newBox.height < LIMITS.CIRCLE.MIN ||
@@ -21,12 +15,26 @@ const boundBoxCallbackForCircle = (oldBox, newBox) => {
   return newBox;
 };
 
-export function Circle({ id, isSelected, type, ...shapeProps }) {
+export function Circle({ id, isSelected, ...shapeProps }) {
   const shapeRef = useRef();
   const transformerRef = useRef();
 
+  // ─────────────────────────
+  // Store actions
+  // ─────────────────────────
+
+  const selectShape = useGardenStore((state) => state.selectShape);
+  const moveShape = useGardenStore((state) => state.moveShape);
+  const transformCircleShape = useGardenStore(
+    (state) => state.transformCircleShape,
+  );
+
+  // ─────────────────────────
+  // Selection logic
+  // ─────────────────────────
+
   useEffect(() => {
-    if (isSelected) {
+    if (isSelected && transformerRef.current && shapeRef.current) {
       transformerRef.current.nodes([shapeRef.current]);
       transformerRef.current.getLayer().batchDraw();
     }
@@ -35,43 +43,37 @@ export function Circle({ id, isSelected, type, ...shapeProps }) {
   const handleSelect = useCallback(
     (event) => {
       event.cancelBubble = true;
-
       selectShape(id);
     },
-    [id]
+    [id, selectShape],
   );
 
-  const handleDrag = useCallback(
-    (event) => {
-      moveShape(id, event);
-    },
-    [id]
-  );
+  const handleDrag = useCallback(() => {
+    moveShape(id, shapeRef.current);
+  }, [id, moveShape]);
 
-  const handleTransform = useCallback(
-    (event) => {
-      transformCircleShape(shapeRef.current, id, event);
-    },
-    [id]
-  );
+  const handleTransform = useCallback(() => {
+    transformCircleShape(shapeRef.current, id);
+  }, [id, transformCircleShape]);
 
   return (
     <>
       <KonvaCircle
-        onClick={handleSelect}
-        onTap={handleSelect}
-        onDragStart={handleSelect}
         ref={shapeRef}
         {...shapeProps}
         draggable
+        onClick={handleSelect}
+        onTap={handleSelect}
+        onDragStart={handleSelect}
         onDragEnd={handleDrag}
         onTransformEnd={handleTransform}
       />
+
       {isSelected && (
         <Transformer
+          ref={transformerRef}
           anchorSize={5}
           borderDash={[6, 2]}
-          ref={transformerRef}
           rotateEnabled={false}
           enabledAnchors={[
             "top-left",

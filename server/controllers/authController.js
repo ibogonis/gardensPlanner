@@ -1,47 +1,50 @@
 const User = require("../models/User");
+
+exports.oauthLogin = async ({ email, name, picture, provider }) => {
+  let user = await User.findOne({ email });
+
+  if (!user) {
+    user = await User.create({
+      username: name,
+      email,
+      avatar: picture || "",
+      provider,
+    });
+  }
+
+  return user;
+};
+
 const jwt = require("jsonwebtoken");
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const generateToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+exports.oauthSuccess = (req, res) => {
+  if (!req.user) {
+    return res.redirect("/login?error=oauth_failed");
+  }
+
+  const token = generateToken(req.user._id);
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.redirect(process.env.CLIENT_URL);
 };
 
-exports.register = async (req, res) => {
-  const { username, email, password } = req.body;
+exports.logout = (req, res) => {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  };
 
-  try {
-    const userExists = await User.findOne({ email });
-    if (userExists)
-      return res.status(400).json({ message: "User already exists" });
-
-    const user = await User.create({ username, email, password });
-
-    res.status(201).json({
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      token: generateToken(user._id),
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-exports.login = async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    const user = await User.findOne({ email });
-    if (user && (await user.matchPassword(password))) {
-      res.json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
-    }
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  res.clearCookie("token", cookieOptions);
+  return res.status(200).json({ message: "Logged out successfully" });
 };

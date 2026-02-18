@@ -1,20 +1,53 @@
 const jwt = require("jsonwebtoken");
 
-const protect = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+function getTokenFromRequest(req) {
+  const authHeader = req.headers?.authorization;
+  if (
+    typeof authHeader === "string" &&
+    authHeader.toLowerCase().startsWith("bearer ")
+  ) {
+    return authHeader.slice(7).trim();
+  }
+
+  const cookieHeader = req.headers?.cookie;
+  if (typeof cookieHeader !== "string" || cookieHeader.length === 0) {
+    return null;
+  }
+
+  const parts = cookieHeader.split(";");
+  for (const part of parts) {
+    const [rawKey, ...rest] = part.trim().split("=");
+    const key = rawKey?.trim();
+    if (!key) continue;
+
+    if (key === "token") {
+      return rest.join("=").trim() || null;
+    }
+  }
+
+  return null;
+}
+
+function protect(req, res, next) {
+  const token = getTokenFromRequest(req);
+
+  if (!token) {
     return res.status(401).json({ message: "Not authorized, no token" });
   }
 
   try {
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!process.env.JWT_SECRET) {
+      return res
+        .status(500)
+        .json({ message: "Server misconfigured: JWT_SECRET missing" });
+    }
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = { id: decoded.id };
-    next();
-  } catch (error) {
-    res.status(401).json({ message: "Not authorized, token failed" });
+    return next();
+  } catch (err) {
+    return res.status(401).json({ message: "Not authorized, token invalid" });
   }
-};
+}
 
 module.exports = protect;

@@ -8,6 +8,11 @@
   url('../public/fonts/Inter-Regular.woff') format('woff'); 
 }
 
+:root{
+  --accent-color: #82B769;
+  --second-accent-color: #E8E138;
+}
+
 .App {
   font-family: 'Inter';
   color: #212427;
@@ -78,7 +83,7 @@ aside {
 }
 
 .green-card {
-  background-color: #82B769;
+  background-color: var(--accent-color);
   color: #FFFFFF;
   
 }
@@ -93,7 +98,7 @@ p {
   }
 
 .white-card {
- border: 2px solid #82B769;
+ border: 2px solid var(--accent-color);
  border-radius: 5px;
 }
 
@@ -105,10 +110,10 @@ img {
 }
 
 button {
-  background-color: #E8E138;
+  background-color: var(--second-accent-color);
     border-radius: 5px;
     padding: 4px 10px;
-    border: 1px solid #E8E138;
+    border: 1px solid var(--second-accent-color);
     cursor: pointer;
     font-size: 1em;
 }
@@ -127,11 +132,11 @@ button:hover {
   text-align: left;
     padding: 20px 0;
     margin: 20px;
-    background:linear-gradient(#E8E138,#E8E138) bottom left no-repeat;
+    background:linear-gradient(var(--second-accent-color),var(--second-accent-color)) bottom left no-repeat;
   background-size:100px 2px;
 }
 .bottomBorder span {
-  color: #82B769;
+  color: var(--accent-color);
 }
 .padding40 {
   padding: 0 40px;
@@ -141,7 +146,7 @@ button:hover {
 }
 
 .green {
-  background-color: #82B769;
+  background-color: var(--accent-color);
   padding: 20px 0;
 }
 

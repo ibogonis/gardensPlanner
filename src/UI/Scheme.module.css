@@ -4,11 +4,11 @@
     margin: 0 10% 0 10px;
 }
 h2 span {
-    color: #82B769;
+    color: var(--accent-color);
 }
 .flex {
-    display: flex; /* displays flex-items (children) inline */
-    flex-wrap: wrap; /* enables their wrapping */
+    display: flex; 
+    flex-wrap: wrap; 
     margin: 0 40px;
   }
   
@@ -19,8 +19,8 @@ h2 span {
     position: relative;
     box-sizing: border-box; /* because of the borders, also recommended in general */
     color: white;
-    background-color: #82B769;
-    border: 1px solid #82B769;
+    background-color: var(--accent-color);
+    border: 1px solid var(--accent-color);
     border-radius: 5px;
 }
   
@@ -56,7 +56,7 @@ h2 span {
     width: 50px;
     height: 50px;
     border-radius: 50px;
-    background-color: #E8E138;
+    background-color: var(--second-accent-color);
     position: absolute;
       top: 25px;
       
@@ -69,7 +69,7 @@ h2 span {
   .titleCircle .yellow {
     width: 36px;
     height: 36px;
-    background-color: #E8E138;
+    background-color: var(--second-accent-color);
     border-radius: 18px;
     margin-top: 5px;
   }
