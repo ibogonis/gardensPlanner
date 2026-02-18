@@ -4,6 +4,7 @@ import logo from "../images/logo.png";
 import { AuthContext } from "../context/AuthContext";
 import LogoutButton from "./LogoutButton";
 import Button from "./Button";
+import { useGardenStore } from "../state/useGardenStore";
 
 export default function Menu() {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ export default function Menu() {
 
   const handleLogout = async () => {
     await logout();
+    useGardenStore.getState().reset();
+    useGardenStore.persist.clearStorage();
     navigate("/login");
   };
   return (
