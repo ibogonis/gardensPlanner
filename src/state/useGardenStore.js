@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import { produce } from "immer";
 import clamp from "clamp";
 import { nanoid } from "nanoid";
+import { planService } from "../services/planService";
 
 import { SHAPE_TYPES, DEFAULTS, LIMITS } from "../data/constants";
 
@@ -200,6 +201,25 @@ export const useGardenStore = create(
             plantings: {},
           },
         }),
+
+      saveCurrentPlan: async () => {
+        const { currentLayout, currentPlan } = get();
+
+        const payload = {
+          name: currentPlan.name,
+          year: currentPlan.year,
+          layout: currentLayout,
+          plantings: currentPlan.plantings,
+        };
+
+        try {
+          const savedPlan = await planService.savePlan(payload);
+          return savedPlan;
+        } catch (error) {
+          console.error("Save plan failed:", error);
+          throw error;
+        }
+      },
     }),
     {
       name: "garden-storage",

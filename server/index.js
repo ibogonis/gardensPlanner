@@ -5,6 +5,7 @@ const cors = require("cors");
 const passport = require("./config/passport");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
+const planRoutes = require("./routes/planRoutes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(express.json());
 // Passport (БЕЗ session)
 app.use(passport.initialize());
 
+app.use("/api/plans", planRoutes);
 app.get("/", (req, res) => res.send("API is running"));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

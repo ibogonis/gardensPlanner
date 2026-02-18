@@ -52,6 +52,8 @@ export default function Canvas() {
     [createRectangle, createCircle],
   );
 
+  const saveCurrentPlan = useGardenStore((state) => state.saveCurrentPlan);
+
   return (
     <div
       className={styles.canvas}
@@ -79,6 +81,18 @@ export default function Canvas() {
 
       <div className={styles.buttons}>
         <button onClick={reset}>Reset</button>
+        <button
+          onClick={async () => {
+            try {
+              await saveCurrentPlan();
+              alert("Plan saved ✅");
+            } catch {
+              alert("Save failed ❌");
+            }
+          }}
+        >
+          Save
+        </button>
       </div>
 
       <Stage

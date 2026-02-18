@@ -7,7 +7,6 @@ const userSchema = new mongoose.Schema(
     avatar: { type: String },
     role: { type: String, default: "user" },
     provider: { type: String }, // 'google' або 'facebook'
-    gardenPlans: [{ type: mongoose.Schema.Types.ObjectId, ref: "GardenPlan" }],
   },
   { timestamps: true },
 );
