@@ -19,10 +19,11 @@ const initialState = {
   currentPlan: {
     id: "plan-1",
     name: "My garden",
-    year: 2024,
+    year: 2026,
     layoutId: "layout-1",
     plantings: {},
   },
+  plans: [],
 };
 
 export const useGardenStore = create(
@@ -218,6 +219,40 @@ export const useGardenStore = create(
         } catch (error) {
           console.error("Save plan failed:", error);
           throw error;
+        }
+      },
+
+      fetchPlans: async () => {
+        try {
+          const plans = await planService.getPlans();
+
+          set({ plans });
+
+          return plans;
+        } catch (error) {
+          console.error("Fetch plans failed:", error);
+        }
+      },
+
+      loadPlan: async (id) => {
+        try {
+          const plan = await planService.getPlan(id);
+
+          set({
+            currentLayout: plan.layout,
+            currentPlan: {
+              id: plan._id,
+              name: plan.name,
+              year: plan.year,
+              layoutId: plan.layout.id,
+              plantings: plan.plantings || {},
+            },
+            selected: null,
+          });
+
+          return plan;
+        } catch (error) {
+          console.error("Load plan failed:", error);
         }
       },
     }),
