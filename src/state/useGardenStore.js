@@ -4,12 +4,7 @@ import { produce } from "immer";
 import clamp from "clamp";
 import { nanoid } from "nanoid";
 import { planService } from "../services/planService";
-
-import {
-  SHAPE_TYPES,
-  DEFAULTS,
-  LIMITS,
-} from "../../../shared/utils/constants/constants";
+import { SHAPE_TYPES, DEFAULTS, LIMITS } from "../data/constants";
 
 const getCurrentYear = () => new Date().getFullYear();
 
