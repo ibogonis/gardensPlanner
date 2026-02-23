@@ -11,11 +11,13 @@ const handleDragOver = (event) => event.preventDefault();
 export default function Canvas() {
   const stageRef = useRef();
 
-  const shapes = useGardenStore((state) => state.currentLayout.shapes);
-  const plantings = useGardenStore((state) => state.currentPlan.plantings);
-  const layoutName = useGardenStore((state) => state.currentLayout.name);
-  const year = useGardenStore((state) => state.currentPlan.year);
-
+  const shapes = useGardenStore((state) => state.currentLayout?.shapes) ?? {};
+  const plantings =
+    useGardenStore((state) => state.currentPlan?.plantings) ?? {};
+  const layoutName = useGardenStore((state) => state.currentLayout?.name) ?? "";
+  const year =
+    useGardenStore((state) => state.currentPlan?.year) ??
+    new Date().getFullYear();
   const createRectangle = useGardenStore((state) => state.createRectangle);
   const createCircle = useGardenStore((state) => state.createCircle);
   const clearSelection = useGardenStore((state) => state.clearSelection);

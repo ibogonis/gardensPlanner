@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import Canvas from "../../components/Canvas";
 
-// 🔹 mutable mock state
 let mockState = {
   currentLayout: {
     shapes: {},
@@ -20,7 +19,7 @@ let mockState = {
   saveCurrentPlan: jest.fn(),
 };
 
-// 🔹 правильний mock
+
 jest.mock("../../state/useGardenStore", () => ({
   useGardenStore: (selector) => selector(mockState),
 }));
