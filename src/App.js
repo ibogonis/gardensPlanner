@@ -14,10 +14,13 @@ import { useEffect } from "react";
 
 function App() {
   const hydrate = useGardenStore.persist.rehydrate;
+  const hasHydrated = useGardenStore.persist.hasHydrated();
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  if (!hasHydrated) return null;
 
   return (
     <AuthProvider>
