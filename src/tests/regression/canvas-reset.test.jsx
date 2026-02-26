@@ -20,7 +20,7 @@ let mockState = {
 };
 
 
-jest.mock("../../state/useGardenStore", () => ({
+jest.mock("../../features/planner/store/useGardenStore", () => ({
   useGardenStore: (selector) => selector(mockState),
 }));
 

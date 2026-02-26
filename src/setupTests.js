@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { useGardenStore } from "./state/useGardenStore";
+import { useGardenStore } from "./features/planner/store/useGardenStore";
 
 // Mock react-konva for testing (canvas not available in jest)
 jest.mock("react-konva", () => {
