@@ -1,5 +1,6 @@
 import axios from "axios";
 import { createContext, useEffect, useState } from "react";
+import { useGardenStore } from "../../features/planner/store/useGardenStore";
 
 export const AuthContext = createContext();
 
@@ -19,6 +20,8 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout failed:", err);
     } finally {
       setUser(null);
+      // Clear persisted garden data on logout
+      useGardenStore.getState().reset();
     }
   };
 
@@ -26,7 +29,13 @@ export const AuthProvider = ({ children }) => {
     axios
       .get("http://localhost:5001/api/users/profile", { withCredentials: true })
       .then((res) => setUser(res.data))
-      .catch(() => setUser(null))
+      .catch((err) => {
+        // Silently handle 401 - user is not logged in
+        if (err.response?.status !== 401) {
+          console.error("Failed to fetch user profile:", err);
+        }
+        setUser(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
