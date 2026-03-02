@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import Canvas from "../../components/Canvas";
+import Canvas from "../../features/planner/components/Canvas/Canvas";
 
 let mockState = {
   currentLayout: {
@@ -20,7 +20,7 @@ let mockState = {
 };
 
 
-jest.mock("../../state/useGardenStore", () => ({
+jest.mock("../../features/planner/store/useGardenStore", () => ({
   useGardenStore: (selector) => selector(mockState),
 }));
 
