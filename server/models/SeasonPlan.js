@@ -11,10 +11,7 @@ const seasonPlanSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    layout: {
-      type: Object,
-      default: {},
-    },
+    // layout removed - now stored in Version for full snapshot versioning
     currentVersionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Version",

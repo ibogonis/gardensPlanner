@@ -7,6 +7,12 @@ const versionSchema = new mongoose.Schema(
       ref: "SeasonPlan",
       required: true,
     },
+    // Full snapshot versioning: both layout and plantings stored here
+    layout: {
+      type: Object,
+      required: true,
+      default: {},
+    },
     plantings: {
       type: Object,
       default: {},

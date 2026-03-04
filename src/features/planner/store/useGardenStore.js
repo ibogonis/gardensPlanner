@@ -4,6 +4,7 @@ import { produce } from "immer";
 import clamp from "clamp";
 import { nanoid } from "nanoid";
 import { planService } from "../services/planService";
+import { gardenService } from "../services/gardenService";
 
 import {
   SHAPE_TYPES,
@@ -22,18 +23,22 @@ const initialLayout = {
 };
 
 const initialPlan = {
-  id: "plan-1",
+  id: null,
   name: "My garden",
   year: getCurrentYear(),
   layoutId: "layout-1",
   plantings: {},
+  gardenId: null, // Will be set when user creates/selects a garden
 };
 
 const initialState = {
   selected: null,
   currentLayout: initialLayout,
   currentPlan: initialPlan,
+  currentGarden: null, // Current garden being worked on
+  gardens: [], // List of all gardens
   plans: [],
+  isSaving: false,
 };
 
 const ensureLayout = (state) => {
@@ -64,7 +69,6 @@ export const useGardenStore = create(
           produce((state) => {
             ensurePlan(state);
             state.currentLayout.name = name;
-            state.currentPlan.name = name;
           }),
         ),
 
@@ -228,16 +232,115 @@ export const useGardenStore = create(
         }),
 
       saveCurrentPlan: async () => {
-        const { currentLayout, currentPlan } = get();
+        const { isSaving } = get();
+        if (isSaving) {
+          console.warn("Save already in progress");
+          return;
+        }
+        try {
+          set({ isSaving: true });
+          console.log("=== Starting saveCurrentPlan ===");
+          const { currentLayout, currentPlan, createGarden } = get();
+          console.log("Current plan state:", {
+            id: currentPlan.id,
+            gardenId: currentPlan.gardenId,
+            year: currentPlan.year,
+            hasLayout: !!currentLayout,
+            hasShapes: Object.keys(currentLayout?.shapes || {}).length,
+          });
 
-        const payload = {
-          name: currentPlan.name,
-          year: currentPlan.year,
-          layout: currentLayout,
-          plantings: currentPlan.plantings,
-        };
+          // Auto-create a garden if none exists
+          if (!currentPlan.gardenId) {
+            console.log("No gardenId, creating new garden...");
+            const gardenTitle = currentLayout.name || "My Garden";
+            try {
+              console.log("Calling createGarden with title:", gardenTitle);
+              await createGarden(gardenTitle);
+              console.log("Garden created successfully, retrying save...");
+            } catch (error) {
+              console.error(
+                "Failed to create garden:",
+                error.response || error,
+              );
+              throw new Error(
+                `Failed to create garden: ${error.response?.status || error.message}`,
+              );
+            }
+            // After createGarden, gardenId is set in state
+            return get().saveCurrentPlan(); // Retry save
+          }
 
-        return planService.savePlan(payload);
+          const payload = {
+            year: currentPlan.year,
+            layout: currentLayout,
+            plantings: currentPlan.plantings,
+            comment: "Manual save",
+          };
+
+          // If plan has an ID (exists in DB), update it (creates new version)
+          if (currentPlan.id) {
+            console.log("Updating existing plan:", currentPlan.id);
+            const updated = await planService.updateSeasonPlan(
+              currentPlan.id,
+              payload,
+            );
+
+            // Update the store with new version info
+            set(
+              produce((state) => {
+                ensurePlan(state);
+                state.currentPlan.id = updated._id;
+                state.currentPlan.currentVersionId = updated.currentVersionId;
+              }),
+            );
+
+            return updated;
+          }
+
+          // Create new season plan
+          const newPlanPayload = {
+            gardenId: currentPlan.gardenId,
+            year: currentPlan.year,
+            ...payload,
+          };
+
+          console.log(
+            "Creating new season plan for garden:",
+            currentPlan.gardenId,
+            "Payload:",
+            newPlanPayload,
+          );
+
+          try {
+            const created = await planService.createSeasonPlan(newPlanPayload);
+            console.log("Season plan created successfully:", created);
+
+            // Update the store with new plan info
+            set(
+              produce((state) => {
+                ensurePlan(state);
+                state.currentPlan.id = created._id;
+                state.currentPlan.gardenId = created.gardenId;
+                state.currentPlan.currentVersionId = created.currentVersionId;
+              }),
+            );
+
+            return created;
+          } catch (error) {
+            console.error(
+              "Failed to create season plan:",
+              error.response || error,
+            );
+            throw new Error(
+              `Failed to create season plan: ${error.response?.status} - ${error.response?.data?.message || error.message}`,
+            );
+          }
+        } catch (error) {
+          console.error("saveCurrentPlan error:", error);
+          throw error;
+        } finally {
+          set({ isSaving: false });
+        }
       },
 
       fetchPlans: async () => {
@@ -267,12 +370,97 @@ export const useGardenStore = create(
 
         return plan;
       },
+
+      // ─────────────────────────────────────────────────────────
+      // Garden Management (New API)
+      // ─────────────────────────────────────────────────────────
+
+      fetchGardens: async () => {
+        const gardens = await gardenService.getGardens();
+        set({ gardens });
+        return gardens;
+      },
+
+      createGarden: async (title) => {
+        const garden = await gardenService.createGarden({ title });
+
+        set(
+          produce((state) => {
+            state.gardens.push(garden);
+            state.currentGarden = garden;
+            // Set gardenId for current plan
+            ensurePlan(state);
+            state.currentPlan.gardenId = garden._id;
+            // Reset plan ID so next save creates a new season plan
+            state.currentPlan.id = null;
+          }),
+        );
+
+        return garden;
+      },
+
+      setCurrentGarden: (garden) =>
+        set(
+          produce((state) => {
+            state.currentGarden = garden;
+            ensurePlan(state);
+            state.currentPlan.gardenId = garden?._id || null;
+          }),
+        ),
+
+      // Load season plan with new API
+      loadSeasonPlan: async (id) => {
+        const seasonPlan = await planService.getSeasonPlan(id);
+
+        set({
+          currentLayout: {
+            ...initialLayout,
+            ...seasonPlan.layout,
+            shapes: seasonPlan.layout?.shapes || {},
+          },
+          currentPlan: {
+            id: seasonPlan._id,
+            gardenId: seasonPlan.gardenId,
+            name: seasonPlan.layout?.name || "My garden",
+            year: seasonPlan.year,
+            layoutId: seasonPlan.layout?.id || initialLayout.id,
+            plantings: seasonPlan.plantings || {},
+            currentVersionId: seasonPlan.currentVersionId,
+          },
+          selected: null,
+        });
+
+        return seasonPlan;
+      },
+
+      fetchSeasonPlans: async (gardenId) => {
+        const plans = await planService.getSeasonPlans(gardenId);
+        set({ plans });
+        return plans;
+      },
+
+      getVersionHistory: async (seasonPlanId) => {
+        return await planService.getVersionHistory(seasonPlanId);
+      },
+
+      restoreVersion: async (versionId) => {
+        const result = await planService.restoreVersion(versionId);
+
+        // Reload the current plan to reflect restored version
+        const { currentPlan } = get();
+        if (currentPlan.id) {
+          await get().loadSeasonPlan(currentPlan.id);
+        }
+
+        return result;
+      },
     }),
     {
       name: "garden-storage",
       partialize: (state) => ({
         currentLayout: state.currentLayout,
         currentPlan: state.currentPlan,
+        currentGarden: state.currentGarden,
       }),
       skipHydration: false,
     },
