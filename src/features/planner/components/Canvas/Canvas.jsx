@@ -88,8 +88,9 @@ export default function Canvas() {
             try {
               await saveCurrentPlan();
               alert("Plan saved ✅");
-            } catch {
-              alert("Save failed ❌");
+            } catch (error) {
+              console.error("Save failed:", error);
+              alert(`Save failed ❌: ${error.message || error}`);
             }
           }}
         >

@@ -181,7 +181,7 @@ async function migratePlan(plan, session) {
     return;
   }
 
-  // Step 3: Create SeasonPlan first (without currentVersionId)
+  // Step 3: Create SeasonPlan first (without currentVersionId or layout)
   if (DRY_RUN) {
     log(
       "INFO",
@@ -189,7 +189,7 @@ async function migratePlan(plan, session) {
     );
     log(
       "INFO",
-      `[DRY RUN] Would create Version with plantings for plan ${plan._id}`,
+      `[DRY RUN] Would create Version with layout and plantings for plan ${plan._id}`,
     );
     stats.versionsCreated++;
     stats.seasonPlansCreated++;
@@ -199,7 +199,7 @@ async function migratePlan(plan, session) {
   const seasonPlan = new SeasonPlan({
     gardenId: gardenId,
     year: year,
-    layout: layout || {},
+    // Note: layout no longer stored here - will be in Version for full snapshot
     createdAt: createdAt, // Preserve original timestamp
   });
 
@@ -207,10 +207,11 @@ async function migratePlan(plan, session) {
   log("SUCCESS", `  ✓ Created SeasonPlan (ID: ${seasonPlan._id})`);
   stats.seasonPlansCreated++;
 
-  // Step 4: Create Version with seasonPlanId
+  // Step 4: Create Version with FULL snapshot (layout + plantings)
   const version = new Version({
     seasonPlanId: seasonPlan._id,
-    plantings: plantings || {},
+    layout: layout || {}, // Full snapshot: layout stored here
+    plantings: plantings || {}, // Full snapshot: plantings stored here
     comment: "Initial migration from legacy Plan collection",
     type: "migration",
     createdAt: createdAt, // Preserve original timestamp
