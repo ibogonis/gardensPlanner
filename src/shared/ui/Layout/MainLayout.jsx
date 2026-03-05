@@ -12,12 +12,26 @@ export default function MainLayout() {
       const store = useGardenStore.getState();
 
       if (user) {
-        // User is logged in - fetch their plans from server
+        // User is logged in - fetch their gardens and load the first season plan
         const init = async () => {
-          const plans = await store.fetchPlans();
+          try {
+            // Fetch all gardens
+            const gardens = await store.fetchGardens();
 
-          if (plans.length > 0) {
-            await store.loadPlan(plans[0]._id);
+            if (gardens.length > 0) {
+              // Set the first garden as current
+              store.setCurrentGarden(gardens[0]);
+
+              // Fetch season plans for the first garden
+              const seasonPlans = await store.fetchSeasonPlans(gardens[0]._id);
+
+              if (seasonPlans.length > 0) {
+                // Load the most recent season plan
+                await store.loadSeasonPlan(seasonPlans[0]._id);
+              }
+            }
+          } catch (error) {
+            console.error("Failed to load user data:", error);
           }
         };
 

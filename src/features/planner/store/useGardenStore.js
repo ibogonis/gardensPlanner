@@ -240,7 +240,7 @@ export const useGardenStore = create(
         try {
           set({ isSaving: true });
           console.log("=== Starting saveCurrentPlan ===");
-          const { currentLayout, currentPlan, createGarden } = get();
+          let { currentLayout, currentPlan, createGarden } = get();
           console.log("Current plan state:", {
             id: currentPlan.id,
             gardenId: currentPlan.gardenId,
@@ -256,7 +256,13 @@ export const useGardenStore = create(
             try {
               console.log("Calling createGarden with title:", gardenTitle);
               await createGarden(gardenTitle);
-              console.log("Garden created successfully, retrying save...");
+              console.log(
+                "Garden created successfully, continuing with save...",
+              );
+              // Refresh state after garden creation
+              const state = get();
+              currentLayout = state.currentLayout;
+              currentPlan = state.currentPlan;
             } catch (error) {
               console.error(
                 "Failed to create garden:",
@@ -266,8 +272,6 @@ export const useGardenStore = create(
                 `Failed to create garden: ${error.response?.status || error.message}`,
               );
             }
-            // After createGarden, gardenId is set in state
-            return get().saveCurrentPlan(); // Retry save
           }
 
           const payload = {

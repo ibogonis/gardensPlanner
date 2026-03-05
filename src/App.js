@@ -35,17 +35,19 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <AuthGuard>
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<HomePage />} />
-              <Route path="planner" element={<PlannerPage />} />
-              <Route path="login" element={<LoginPage />} />
-              <Route path="blog" element={<BlogPage />} />
-              <Route path="blog/:slug" element={<ArticlePage />} />
-              <Route path="contacts" element={<ContactsPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
+          <div className="App">
+            <Routes>
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<HomePage />} />
+                <Route path="planner" element={<PlannerPage />} />
+                <Route path="login" element={<LoginPage />} />
+                <Route path="blog" element={<BlogPage />} />
+                <Route path="blog/:slug" element={<ArticlePage />} />
+                <Route path="contacts" element={<ContactsPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
+          </div>
         </AuthGuard>
       </AuthProvider>
     </BrowserRouter>
