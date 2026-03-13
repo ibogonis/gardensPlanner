@@ -5,6 +5,7 @@ import styles from "./Canvas.module.css";
 import { useGardenStore } from "../../store/useGardenStore";
 import { DRAG_DATA_KEY, SHAPE_TYPES } from "../../../../shared/utils/constants/constants";
 import { Shape } from "./Shape";
+import PlannerHeader from "../PlannerHeader/PlannerHeader";
 
 const handleDragOver = (event) => event.preventDefault();
 
@@ -14,16 +15,9 @@ export default function Canvas() {
   const shapes = useGardenStore((state) => state.currentLayout?.shapes) ?? {};
   const plantings =
     useGardenStore((state) => state.currentPlan?.plantings) ?? {};
-  const layoutName = useGardenStore((state) => state.currentLayout?.name) ?? "";
-  const year =
-    useGardenStore((state) => state.currentPlan?.year) ??
-    new Date().getFullYear();
   const createRectangle = useGardenStore((state) => state.createRectangle);
   const createCircle = useGardenStore((state) => state.createCircle);
   const clearSelection = useGardenStore((state) => state.clearSelection);
-  const reset = useGardenStore((state) => state.reset);
-  const setLayoutName = useGardenStore((state) => state.setLayoutName);
-  const setYear = useGardenStore((state) => state.setYear);
 
   const handleDrop = useCallback(
     (event) => {
@@ -54,49 +48,13 @@ export default function Canvas() {
     [createRectangle, createCircle],
   );
 
-  const saveCurrentPlan = useGardenStore((state) => state.saveCurrentPlan);
-
   return (
     <div
       className={styles.canvas}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      <div className={styles.planProperties}>
-        <label>Name your garden</label>
-        <input
-          type="text"
-          value={layoutName || ""}
-          onChange={(e) => setLayoutName(e.target.value)}
-        />
-
-        <label>Year</label>
-        <input
-          type="number"
-          min="2000"
-          max="2099"
-          step="1"
-          value={year || 2026}
-          onChange={(e) => setYear(Number(e.target.value))}
-        />
-      </div>
-
-      <div className={styles.buttons}>
-        <button onClick={reset}>Reset</button>
-        <button
-          onClick={async () => {
-            try {
-              await saveCurrentPlan();
-              alert("Plan saved ✅");
-            } catch (error) {
-              console.error("Save failed:", error);
-              alert(`Save failed ❌: ${error.message || error}`);
-            }
-          }}
-        >
-          Save
-        </button>
-      </div>
+      <PlannerHeader />
 
       <Stage
         ref={stageRef}

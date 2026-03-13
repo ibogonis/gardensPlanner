@@ -458,6 +458,141 @@ export const useGardenStore = create(
 
         return result;
       },
+
+      updateVersionName: async (newName) => {
+        const { currentPlan, currentLayout } = get();
+        if (!currentPlan?.currentVersionId) {
+          throw new Error("No current version to update");
+        }
+
+        // Update in backend via updateSeasonPlan with new name
+        await planService.updateSeasonPlan(currentPlan.id, {
+          year: currentPlan.year,
+          layout: {
+            ...currentLayout,
+            name: newName,
+          },
+          plantings: currentPlan.plantings,
+          comment: "Updated garden name",
+        });
+
+        // Update local state
+        set(
+          produce((state) => {
+            ensureLayout(state);
+            state.currentLayout.name = newName;
+            if (state.currentGarden) {
+              state.currentGarden.title = newName;
+            }
+          }),
+        );
+      },
+
+      updateSeasonYear: async (newYear) => {
+        const { currentPlan, currentLayout } = get();
+        if (!currentPlan?.id) {
+          throw new Error("No current season plan to update");
+        }
+
+        // Update in backend
+        await planService.updateSeasonPlan(currentPlan.id, {
+          year: newYear,
+          layout: currentLayout,
+          plantings: currentPlan.plantings,
+          comment: "Updated year",
+        });
+
+        // Update local state
+        set(
+          produce((state) => {
+            ensurePlan(state);
+            state.currentPlan.year = newYear;
+          }),
+        );
+      },
+
+      // ─────────────────────────────────────────────────────────
+      // Create New Entities (+ New Season / + New Garden)
+      // ─────────────────────────────────────────────────────────
+
+      createNewSeason: async ({ year, layoutSource, sourceSeasonId }) => {
+        const { currentGarden, currentLayout } = get();
+        if (!currentGarden) {
+          throw new Error("No current garden selected");
+        }
+
+        let layoutToUse = { ...initialLayout };
+        let plantingsToUse = {};
+
+        // If copying layout from existing season
+        if (layoutSource === "copy" && sourceSeasonId) {
+          // Use current layout and plantings as source
+          layoutToUse = {
+            ...currentLayout,
+            id: nanoid(), // New layout ID
+          };
+          // Don't copy plantings - new season should have empty crops
+          plantingsToUse = {};
+        } else {
+          // Empty garden
+          layoutToUse = {
+            ...initialLayout,
+            id: nanoid(),
+            name: currentGarden.title,
+          };
+        }
+
+        // Create new season plan
+        const newSeasonPlan = await planService.createSeasonPlan({
+          gardenId: currentGarden._id,
+          year,
+          layout: layoutToUse,
+          plantings: plantingsToUse,
+          comment: "New season created",
+        });
+
+        // Load the new season plan into current state
+        await get().loadSeasonPlan(newSeasonPlan._id);
+
+        // Refresh season plans list
+        await get().fetchSeasonPlans(currentGarden._id);
+
+        return newSeasonPlan;
+      },
+
+      createNewGarden: async ({ title, firstYear }) => {
+        // Create garden
+        const garden = await gardenService.createGarden({ title });
+
+        // Create first season plan with empty layout
+        const firstSeasonPlan = await planService.createSeasonPlan({
+          gardenId: garden._id,
+          year: firstYear,
+          layout: {
+            ...initialLayout,
+            id: nanoid(),
+            name: title,
+          },
+          plantings: {},
+          comment: "Initial season",
+        });
+
+        // Update state
+        set(
+          produce((state) => {
+            state.gardens.push(garden);
+            state.currentGarden = garden;
+          }),
+        );
+
+        // Load the new season plan
+        await get().loadSeasonPlan(firstSeasonPlan._id);
+
+        // Refresh gardens list
+        await get().fetchGardens();
+
+        return { garden, firstSeasonPlan };
+      },
     }),
     {
       name: "garden-storage",
