@@ -1,6 +1,6 @@
 .header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 12px 16px;
   background: #fff;
@@ -109,9 +109,16 @@
   width: 80px;
 }
 
-.actions {
+.centerSection {
   display: flex;
   gap: 8px;
+  justify-content: center;
+}
+
+.rightSection {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .button {

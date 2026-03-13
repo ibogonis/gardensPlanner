@@ -151,7 +151,7 @@ export default function PlannerHeader() {
           )}
         </div>
 
-        <div className={styles.actions}>
+        <div className={styles.centerSection}>
           {!isEditing && (
             <>
               <button
@@ -166,6 +166,13 @@ export default function PlannerHeader() {
               >
                 + New garden
               </button>
+            </>
+          )}
+        </div>
+
+        <div className={styles.rightSection}>
+          {!isEditing && (
+            <>
               <button onClick={reset} className={styles.button}>
                 Reset
               </button>
