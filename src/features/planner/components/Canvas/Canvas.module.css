@@ -1,8 +1,8 @@
 .canvas {
   border: 1px solid black;
-  width: calc(100% - 250px);
+  width: 100%;
   position: relative;
-  margin: 1rem;
+  margin: 0;
   height: 100%;
   padding-top: 56px; /* Space for the header */
 }

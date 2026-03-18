@@ -58,8 +58,8 @@ export default function Canvas() {
 
       <Stage
         ref={stageRef}
-        width={window.innerWidth - 250}
-        height={window.innerHeight}
+        width={window.innerWidth - 510} // Account for left (260px) + right (250px) sidebars
+        height={window.innerHeight - 56} // Account for header (56px)
         onClick={clearSelection}
       >
         <Layer>

@@ -38,7 +38,11 @@ const initialState = {
   currentGarden: null, // Current garden being worked on
   gardens: [], // List of all gardens
   plans: [],
+  versions: [], // Version history for current plan
   isSaving: false,
+  isPreviewMode: false,
+  previewVersionId: null,
+  savedStateBeforePreview: null, // Store state before preview
 };
 
 const ensureLayout = (state) => {
@@ -444,7 +448,9 @@ export const useGardenStore = create(
       },
 
       getVersionHistory: async (seasonPlanId) => {
-        return await planService.getVersionHistory(seasonPlanId);
+        const versions = await planService.getVersionHistory(seasonPlanId);
+        set({ versions });
+        return versions;
       },
 
       restoreVersion: async (versionId) => {
@@ -454,9 +460,93 @@ export const useGardenStore = create(
         const { currentPlan } = get();
         if (currentPlan.id) {
           await get().loadSeasonPlan(currentPlan.id);
+          // Refresh version history
+          await get().getVersionHistory(currentPlan.id);
         }
 
         return result;
+      },
+
+      // ─────────────────────────────────────────────────────────
+      // Preview Mode
+      // ─────────────────────────────────────────────────────────
+
+      previewVersion: async (versionId) => {
+        const { currentLayout, currentPlan } = get();
+
+        // Save current state before preview
+        const savedState = {
+          layout: { ...currentLayout },
+          plan: { ...currentPlan },
+        };
+
+        // Fetch the version snapshot
+        const version = await planService.getVersion(versionId);
+
+        set(
+          produce((state) => {
+            state.isPreviewMode = true;
+            state.previewVersionId = versionId;
+            state.savedStateBeforePreview = savedState;
+            // Load preview snapshot
+            state.currentLayout = {
+              ...initialLayout,
+              ...version.layout,
+              shapes: version.layout?.shapes || {},
+            };
+            state.currentPlan.plantings = version.plantings || {};
+          }),
+        );
+      },
+
+      exitPreview: () => {
+        const { savedStateBeforePreview } = get();
+
+        if (savedStateBeforePreview) {
+          set(
+            produce((state) => {
+              state.isPreviewMode = false;
+              state.previewVersionId = null;
+              state.currentLayout = savedStateBeforePreview.layout;
+              state.currentPlan.plantings =
+                savedStateBeforePreview.plan.plantings;
+              state.savedStateBeforePreview = null;
+            }),
+          );
+        }
+      },
+
+      // ─────────────────────────────────────────────────────────
+      // Garden & Season Selection
+      // ─────────────────────────────────────────────────────────
+
+      selectGarden: async (gardenId) => {
+        const { gardens } = get();
+        const garden = gardens.find((g) => g._id === gardenId);
+
+        if (!garden) {
+          throw new Error("Garden not found");
+        }
+
+        set({ currentGarden: garden });
+
+        // Fetch season plans for this garden
+        const plans = await get().fetchSeasonPlans(gardenId);
+
+        // Load the most recent season plan
+        if (plans.length > 0) {
+          await get().selectPlan(plans[0]._id);
+        }
+
+        return garden;
+      },
+
+      selectPlan: async (planId) => {
+        // Load the season plan
+        await get().loadSeasonPlan(planId);
+
+        // Fetch version history
+        await get().getVersionHistory(planId);
       },
 
       updateVersionName: async (newName) => {

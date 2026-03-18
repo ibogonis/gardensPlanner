@@ -33,6 +33,12 @@ export const planService = {
     return response.data;
   },
 
+  // Get a specific version (full snapshot)
+  async getVersion(versionId) {
+    const response = await axios.get(`/api/gardens/versions/${versionId}`);
+    return response.data;
+  },
+
   // Restore a version
   async restoreVersion(versionId) {
     const response = await axios.post(
