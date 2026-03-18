@@ -21,13 +21,19 @@ export function HistoryTable() {
   const previewVersion = useGardenStore((state) => state.previewVersion);
   const exitPreview = useGardenStore((state) => state.exitPreview);
   const restoreVersion = useGardenStore((state) => state.restoreVersion);
+  const getVersionHistory = useGardenStore((state) => state.getVersionHistory);
 
-  // Load gardens on mount
+  // Load gardens on mount and version history if plan exists
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         await fetchGardens();
+        
+        // If there's already a current plan (from persisted state), load its version history
+        if (currentPlan?.id) {
+          await getVersionHistory(currentPlan.id);
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -35,7 +41,21 @@ export function HistoryTable() {
       }
     };
     loadData();
-  }, [fetchGardens]);
+  }, [fetchGardens, getVersionHistory, currentPlan?.id]);
+
+  // Refresh version history when currentVersionId changes (after save)
+  useEffect(() => {
+    const refreshVersionHistory = async () => {
+      if (currentPlan?.id && currentPlan?.currentVersionId) {
+        try {
+          await getVersionHistory(currentPlan.id);
+        } catch (err) {
+          console.error("Failed to refresh version history:", err);
+        }
+      }
+    };
+    refreshVersionHistory();
+  }, [currentPlan?.currentVersionId, currentPlan?.id, getVersionHistory]);
 
   const handleGardenChange = async (e) => {
     const gardenId = e.target.value;
