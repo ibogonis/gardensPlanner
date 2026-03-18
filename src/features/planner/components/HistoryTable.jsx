@@ -5,6 +5,7 @@ import styles from "./HistoryTable.module.css";
 export function HistoryTable() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isVersionHistoryExpanded, setIsVersionHistoryExpanded] = useState(false);
 
   const gardens = useGardenStore((state) => state.gardens);
   const currentGarden = useGardenStore((state) => state.currentGarden);
@@ -202,68 +203,79 @@ export function HistoryTable() {
       {/* Version List */}
       {currentPlan && (
         <div className={styles.section}>
-          <label className={styles.label}>Version History</label>
-          <div className={styles.versionList}>
-            {loading && <div className={styles.loading}>Loading...</div>}
-            {!loading && versions.length === 0 && (
-              <div className={styles.empty}>No versions yet</div>
-            )}
-            {!loading &&
-              versions.map((version, index) => {
-                const isCurrent = isCurrentVersion(version._id);
-                const isPreviewing = previewVersionId === version._id;
+          <div 
+            className={styles.dropdownHeader}
+            onClick={() => setIsVersionHistoryExpanded(!isVersionHistoryExpanded)}
+          >
+            <label className={styles.label}>Version History</label>
+            <span className={styles.dropdownArrow}>
+              {isVersionHistoryExpanded ? "▼" : "▶"}
+            </span>
+          </div>
+          
+          {isVersionHistoryExpanded && (
+            <div className={styles.versionList}>
+              {loading && <div className={styles.loading}>Loading...</div>}
+              {!loading && versions.length === 0 && (
+                <div className={styles.empty}>No versions yet</div>
+              )}
+              {!loading &&
+                versions.map((version, index) => {
+                  const isCurrent = isCurrentVersion(version._id);
+                  const isPreviewing = previewVersionId === version._id;
 
-                return (
-                  <div
-                    key={version._id}
-                    className={`${styles.versionItem} ${
-                      isCurrent ? styles.current : ""
-                    } ${isPreviewing ? styles.previewing : ""}`}
-                  >
-                    <div className={styles.versionHeader}>
-                      <div className={styles.versionInfo}>
-                        <span
-                          className={`${styles.indicator} ${
-                            isCurrent ? styles.indicatorCurrent : ""
-                          }`}
-                        >
-                          {isCurrent ? "●" : "○"}
-                        </span>
-                        <span className={styles.versionComment}>
-                          {version.comment || "Version " + (versions.length - index)}
+                  return (
+                    <div
+                      key={version._id}
+                      className={`${styles.versionItem} ${
+                        isCurrent ? styles.current : ""
+                      } ${isPreviewing ? styles.previewing : ""}`}
+                    >
+                      <div className={styles.versionHeader}>
+                        <div className={styles.versionInfo}>
+                          <span
+                            className={`${styles.indicator} ${
+                              isCurrent ? styles.indicatorCurrent : ""
+                            }`}
+                          >
+                            {isCurrent ? "●" : "○"}
+                          </span>
+                          <span className={styles.versionComment}>
+                            {version.comment || "Version " + (versions.length - index)}
+                          </span>
+                        </div>
+                        <span className={styles.versionTime}>
+                          {formatTime(version.createdAt)}
                         </span>
                       </div>
-                      <span className={styles.versionTime}>
-                        {formatTime(version.createdAt)}
-                      </span>
-                    </div>
-                    <div className={styles.versionDate}>
-                      {formatDate(version.createdAt)}
-                    </div>
-                    {!isPreviewMode && (
-                      <div className={styles.versionActions}>
-                        <button
-                          onClick={() => handlePreview(version._id)}
-                          className={styles.previewBtn}
-                          disabled={loading}
-                        >
-                          Preview
-                        </button>
-                        {!isCurrent && (
+                      <div className={styles.versionDate}>
+                        {formatDate(version.createdAt)}
+                      </div>
+                      {!isPreviewMode && (
+                        <div className={styles.versionActions}>
                           <button
-                            onClick={() => handleRestore(version._id)}
-                            className={styles.restoreBtn}
+                            onClick={() => handlePreview(version._id)}
+                            className={styles.previewBtn}
                             disabled={loading}
                           >
-                            Restore
+                            Preview
                           </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-          </div>
+                          {!isCurrent && (
+                            <button
+                              onClick={() => handleRestore(version._id)}
+                              className={styles.restoreBtn}
+                              disabled={loading}
+                            >
+                              Restore
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
       )}
     </div>

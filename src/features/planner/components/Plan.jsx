@@ -8,17 +8,14 @@ export default function Plan() {
   return (
     <main className={styles.mainField}>
       <aside className={styles.leftSidebar}>
+        <Palette />
+        <PropertiesPanel />
         <HistoryTable />
       </aside>
 
       <div className={styles.content}>
         <Canvas />
       </div>
-
-      <aside className={styles.rightSidebar}>
-        <Palette />
-        <PropertiesPanel />
-      </aside>
     </main>
   );
 }
