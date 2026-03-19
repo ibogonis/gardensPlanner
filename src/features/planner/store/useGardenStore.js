@@ -593,9 +593,20 @@ export const useGardenStore = create(
       },
 
       updateSeasonYear: async (newYear) => {
-        const { currentPlan, currentLayout } = get();
+        const { currentPlan, currentLayout, plans } = get();
         if (!currentPlan?.id) {
           throw new Error("No current season plan to update");
+        }
+
+        // Check if a season with this year already exists for this garden
+        const existingSeason = plans.find(
+          (plan) => plan.year === newYear && plan._id !== currentPlan.id,
+        );
+
+        if (existingSeason) {
+          throw new Error(
+            `Season ${newYear} already exists for this garden. Please switch to that season if you want to modify it.`,
+          );
         }
 
         // Update in backend

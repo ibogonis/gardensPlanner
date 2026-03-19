@@ -45,6 +45,9 @@ export default function PlannerHeader() {
     } catch (error) {
       console.error("Failed to save changes:", error);
       alert(`Failed to save changes: ${error.message}`);
+      // Revert edited values to original on error
+      setEditedName(gardenName);
+      setEditedYear(seasonYear);
     }
   };
 
