@@ -9,8 +9,11 @@
   width: 260px;
   height: 100vh;
   overflow-y: auto;
-  background: #fafafa;
-  border-right: 1px solid #e0e0e0;
+  background: #F7F7F7;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .content {
