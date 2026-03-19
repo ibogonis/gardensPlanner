@@ -550,9 +550,16 @@ export const useGardenStore = create(
       },
 
       updateVersionName: async (newName) => {
-        const { currentPlan, currentLayout } = get();
+        const { currentPlan, currentLayout, currentGarden } = get();
         if (!currentPlan?.currentVersionId) {
           throw new Error("No current version to update");
+        }
+
+        // Update the Garden document in backend
+        if (currentGarden?._id) {
+          await gardenService.updateGarden(currentGarden._id, {
+            title: newName,
+          });
         }
 
         // Update in backend via updateSeasonPlan with new name
@@ -573,6 +580,13 @@ export const useGardenStore = create(
             state.currentLayout.name = newName;
             if (state.currentGarden) {
               state.currentGarden.title = newName;
+              // Also update the garden in the gardens array
+              const gardenIndex = state.gardens.findIndex(
+                (g) => g._id === state.currentGarden._id,
+              );
+              if (gardenIndex !== -1) {
+                state.gardens[gardenIndex].title = newName;
+              }
             }
           }),
         );
@@ -597,6 +611,13 @@ export const useGardenStore = create(
           produce((state) => {
             ensurePlan(state);
             state.currentPlan.year = newYear;
+            // Also update the plan in the plans array
+            const planIndex = state.plans.findIndex(
+              (p) => p._id === state.currentPlan.id,
+            );
+            if (planIndex !== -1) {
+              state.plans[planIndex].year = newYear;
+            }
           }),
         );
       },
