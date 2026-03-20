@@ -5,9 +5,31 @@ import styles from "./Modal.module.css";
 export default function NewGardenModal({ onClose }) {
   const [gardenName, setGardenName] = useState("My garden");
   const [firstYear, setFirstYear] = useState(new Date().getFullYear());
+  const [errorMessage, setErrorMessage] = useState("");
   const createNewGarden = useGardenStore((state) => state.createNewGarden);
+  const gardens = useGardenStore((state) => state.gardens);
 
   const handleCreate = async () => {
+    // Validation
+    const trimmedName = gardenName?.trim();
+    
+    if (!trimmedName) {
+      setErrorMessage("Enter the name");
+      return;
+    }
+
+    const isDuplicate = gardens.some(
+      (g) => g.title.toLowerCase() === trimmedName.toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      setErrorMessage("A garden with this name already exists. Please choose another name.");
+      return;
+    }
+
+    // Clear any previous errors
+    setErrorMessage("");
+
     try {
       await createNewGarden({
         title: gardenName,
@@ -31,10 +53,17 @@ export default function NewGardenModal({ onClose }) {
           <input
             type="text"
             value={gardenName}
-            onChange={(e) => setGardenName(e.target.value)}
-            className={styles.input}
+            onChange={(e) => {
+              setGardenName(e.target.value);
+              if (errorMessage) setErrorMessage("");
+            }}
+            className={`${styles.input} ${errorMessage ? styles.inputError : ''}`}
             placeholder="My garden"
+            maxLength={80}
           />
+          <div className={styles.errorMessage}>
+            {errorMessage}
+          </div>
         </div>
 
         <div className={styles.field}>
@@ -53,7 +82,10 @@ export default function NewGardenModal({ onClose }) {
           <button onClick={onClose} className={styles.buttonSecondary}>
             Cancel
           </button>
-          <button onClick={handleCreate} className={styles.buttonPrimary}>
+          <button 
+            onClick={handleCreate} 
+            className={styles.buttonPrimary}
+          >
             Create garden
           </button>
         </div>

@@ -5,6 +5,8 @@ const gardenSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      maxlength: 80,
+      trim: true,
     },
     members: [
       {

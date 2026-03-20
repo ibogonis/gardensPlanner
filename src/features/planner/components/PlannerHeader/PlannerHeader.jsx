@@ -77,6 +77,7 @@ export default function PlannerHeader() {
               value={gardenName}
               onChange={(e) => useGardenStore.getState().setLayoutName(e.target.value)}
               className={styles.input}
+              maxLength={80}
             />
           </div>
           <div className={styles.field}>
@@ -105,6 +106,8 @@ export default function PlannerHeader() {
   }
 
   // State 2: After first save
+  const isNameEmpty = isEditing && !editedName?.trim();
+
   return (
     <>
       <div className={styles.header}>
@@ -117,7 +120,9 @@ export default function PlannerHeader() {
                   type="text"
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
-                  className={styles.inputInline}
+                  className={`${styles.inputInline} ${isNameEmpty ? styles.inputError : ''}`}
+                  placeholder="Garden name"
+                  maxLength={80}
                 />
                 <span className={styles.separator}>&gt;</span>
                 <input
@@ -143,7 +148,12 @@ export default function PlannerHeader() {
               <button onClick={handleCancelEdit} className={styles.button}>
                 Cancel
               </button>
-              <button onClick={handleSaveChanges} className={styles.buttonPrimary}>
+              <button 
+                onClick={handleSaveChanges} 
+                className={styles.buttonPrimary}
+                disabled={isNameEmpty}
+                title={isNameEmpty ? "Garden name is required" : ""}
+              >
                 Save changes
               </button>
             </div>
