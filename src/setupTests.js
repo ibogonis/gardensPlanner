@@ -17,6 +17,44 @@ jest.mock("react-konva", () => {
     Transformer: () => <div data-testid="konva-transformer" />,
   };
 });
+jest.mock("axios", () => {
+  const mockAxiosInstance = {
+    get: jest.fn(() => Promise.resolve({ data: null })),
+    post: jest.fn(() => Promise.resolve({ data: {} })),
+    put: jest.fn(() => Promise.resolve({ data: {} })),
+    delete: jest.fn(() => Promise.resolve({ data: {} })),
+  };
+
+  return {
+    __esModule: true,
+    default: {
+      create: jest.fn(() => mockAxiosInstance),
+      get: mockAxiosInstance.get,
+      post: mockAxiosInstance.post,
+      put: mockAxiosInstance.put,
+      delete: mockAxiosInstance.delete,
+    },
+  };
+});
+
+jest.mock("./app/providers/AuthProvider", () => {
+  const React = require("react");
+
+  const mockContext = {
+    user: null,
+    loading: false,
+  };
+
+  return {
+    __esModule: true,
+    AuthProvider: ({ children }) => children,
+    AuthContext: React.createContext(mockContext),
+  };
+});
+
+jest.mock("./app/providers/AuthGuard", () => ({
+  AuthGuard: ({ children }) => children,
+}));
 
 // Mock window.matchMedia for components that use media queries
 Object.defineProperty(window, "matchMedia", {
