@@ -32,7 +32,12 @@ function App() {
   if (!hasHydrated) return null;
 
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_relativeSplatPath: true,
+        v7_startTransition: true,
+      }}
+    >
       <AuthProvider>
         <AuthGuard>
           <div className="App">
