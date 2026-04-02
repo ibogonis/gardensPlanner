@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useGardenStore } from "../store/useGardenStore";
+import { useGardenStore } from "../../store/useGardenStore";
 import styles from "./HistoryTable.module.css";
 
 export function HistoryTable() {

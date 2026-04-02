@@ -1,7 +1,7 @@
-import Canvas from "./Canvas/Canvas";
-import { Palette } from "./Palette/Palette";
-import { PropertiesPanel } from "./PropertiesPanel/PropertiesPanel";
-import { HistoryTable } from "./HistoryTable";
+import Canvas from "../Canvas/Canvas";
+import { Palette } from "../Palette/Palette";
+import { PropertiesPanel } from "../PropertiesPanel/PropertiesPanel";
+import { HistoryTable } from "../HistoryTable/HistoryTable";
 import styles from "./Plan.module.css";
 
 export default function Plan() {
