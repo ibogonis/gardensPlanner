@@ -1,19 +1,40 @@
-import { render } from '@testing-library/react';
-import App from '../../App';
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import App from "../../App";
 
-// App already has BrowserRouter, so we just render it directly
-// and let it handle its own routing
+describe("Routing Tests", () => {
+  test("Home page renders by default", async () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>
+    );
 
-describe('Routing Tests', () => {
-  test('App renders with default route (home)', () => {
-    render(<App />);
-    // App should render home page by default
-    expect(true).toBe(true);
+    expect(
+      await screen.findByRole("heading", {
+        name: /free vegetable garden planner/i,
+      })
+    ).toBeInTheDocument();
   });
 
-  test('App with routing structure renders without errors', () => {
-    render(<App />);
-    // If we get here, routing is set up correctly
-    expect(true).toBe(true);
+  test("user can navigate from Home to Planner", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>
+    );
+
+    const link = await screen.findByRole("link", {
+      name: /create a plan/i,
+    });
+
+    await user.click(link);
+
+    expect(
+      await screen.findByDisplayValue(/my garden/i)
+    ).toBeInTheDocument();
   });
 });

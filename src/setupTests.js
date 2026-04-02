@@ -52,10 +52,6 @@ jest.mock("./app/providers/AuthProvider", () => {
   };
 });
 
-jest.mock("./app/providers/AuthGuard", () => ({
-  AuthGuard: ({ children }) => children,
-}));
-
 // Mock window.matchMedia for components that use media queries
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -80,9 +76,15 @@ const localStorageMock = {
 };
 global.localStorage = localStorageMock;
 
-// Zustand hydration mock
+beforeEach(() => {
+  useGardenStore.persist.rehydrate = jest.fn(() => Promise.resolve());
+});
 
 beforeEach(() => {
-  // hydration resolves instantly in tests
-  useGardenStore.persist.rehydrate = jest.fn(() => Promise.resolve());
+  useGardenStore.persist.onFinishHydration = (callback) => {
+    callback();
+    return () => {};
+  };
+
+  useGardenStore.persist.rehydrate = jest.fn();
 });

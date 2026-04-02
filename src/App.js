@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import HomePage from "./features/static-pages/HomePage";
@@ -32,30 +32,23 @@ function App() {
   if (!hasHydrated) return null;
 
   return (
-    <BrowserRouter
-      future={{
-        v7_relativeSplatPath: true,
-        v7_startTransition: true,
-      }}
-    >
-      <AuthProvider>
-        <AuthGuard>
-          <div className="App">
-            <Routes>
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<HomePage />} />
-                <Route path="planner" element={<PlannerPage />} />
-                <Route path="login" element={<LoginPage />} />
-                <Route path="blog" element={<BlogPage />} />
-                <Route path="blog/:slug" element={<ArticlePage />} />
-                <Route path="contacts" element={<ContactsPage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Routes>
-          </div>
-        </AuthGuard>
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <AuthGuard>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<HomePage />} />
+              <Route path="planner" element={<PlannerPage />} />
+              <Route path="login" element={<LoginPage />} />
+              <Route path="blog" element={<BlogPage />} />
+              <Route path="blog/:slug" element={<ArticlePage />} />
+              <Route path="contacts" element={<ContactsPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </div>
+      </AuthGuard>
+    </AuthProvider>
   );
 }
 
