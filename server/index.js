@@ -5,7 +5,7 @@ const cors = require("cors");
 const passport = require("./config/passport");
 const authRoutes = require("./src/modules/auth/auth.routes");
 const userRoutes = require("./src/modules/users/user.routes");
-const planRoutes = require("./src/modules/plans/plan.routes");
+//const planRoutes = require("./src/modules/plans/plan.routes");
 const gardenRoutes = require("./src/modules/gardens/garden.routes");
 
 const app = express();
@@ -26,7 +26,7 @@ app.use(express.json());
 app.use(passport.initialize());
 
 // API Routes
-app.use("/api/plans", planRoutes); // Legacy routes
+//app.use("/api/plans", planRoutes); // Legacy routes
 app.use("/api/gardens", gardenRoutes); // New normalized routes
 app.get("/", (req, res) => res.send("API is running"));
 app.use("/api/auth", authRoutes);

@@ -46,23 +46,4 @@ export const planService = {
     );
     return response.data;
   },
-
-  // LEGACY API - will be removed after migration
-  // Legacy: Create plan (old API)
-  async savePlan(data) {
-    const response = await axios.post("/api/plans", data);
-    return response.data;
-  },
-
-  // Legacy: Get all plans (old API)
-  async getPlans() {
-    const response = await axios.get("/api/plans");
-    return response.data;
-  },
-
-  // Legacy: Get plan by ID (old API)
-  async getPlan(id) {
-    const response = await axios.get(`/api/plans/${id}`);
-    return response.data;
-  },
 };
