@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../../shared/utils/api/axiosConfig";
 import { createContext, useEffect, useState } from "react";
 import { useGardenStore } from "../../features/planner/store/useGardenStore";
 
@@ -10,27 +10,20 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post(
-        "http://localhost:5001/api/auth/logout",
-        {},
-        { withCredentials: true },
-      );
+      await axios.post("/api/auth/logout");
     } catch (err) {
-      // Logout is user intent; even if the request fails, we clear UI state.
       console.error("Logout failed:", err);
     } finally {
       setUser(null);
-      // Clear persisted garden data on logout
       useGardenStore.getState().reset();
     }
   };
 
   useEffect(() => {
     axios
-      .get("http://localhost:5001/api/users/profile", { withCredentials: true })
+      .get("/api/users/profile")
       .then((res) => setUser(res.data))
       .catch((err) => {
-        // Silently handle 401 - user is not logged in
         if (err.response?.status !== 401) {
           console.error("Failed to fetch user profile:", err);
         }

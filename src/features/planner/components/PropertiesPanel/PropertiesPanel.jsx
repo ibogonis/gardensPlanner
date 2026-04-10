@@ -58,14 +58,14 @@ export function PropertiesPanel() {
 
   return (
     <div className={styles.panel}>
-      <h4>Properties</h4>
+      <h3 className={styles.title}>Properties</h3>
 
       <div className={styles.properties}>
         {selectedShape ? (
           <>
-            {/* Grow (тепер через plantings) */}
-            <div className={styles.key}>
-              Grow
+            {/* Grow - with green highlight */}
+            <div className={`${styles.key} ${styles.growRow}`}>
+              <span className={styles.keyLabel}>Grow</span>
               <select
                 className={styles.value}
                 value={selectedCrop}
@@ -82,9 +82,9 @@ export function PropertiesPanel() {
 
             {/* Stroke */}
             <div className={styles.key}>
-              Stroke
+              <span className={styles.keyLabel}>Stroke</span>
               <input
-                className={styles.value}
+                className={styles.colorPicker}
                 name="stroke"
                 type="color"
                 value={selectedShape.stroke || "#000000"}
@@ -94,9 +94,9 @@ export function PropertiesPanel() {
 
             {/* Fill */}
             <div className={styles.key}>
-              Fill
+              <span className={styles.keyLabel}>Fill</span>
               <input
-                className={styles.value}
+                className={styles.colorPicker}
                 name="fill"
                 type="color"
                 value={selectedShape.fill || "#ffffff"}
@@ -104,12 +104,12 @@ export function PropertiesPanel() {
               />
             </div>
 
-            <div>
-              <input type="button" value="delete" onClick={handleDelete} />
-            </div>
+            <button className={styles.deleteButton} onClick={handleDelete}>
+              Delete
+            </button>
           </>
         ) : (
-          <div className="no-data">Nothing is selected</div>
+          <div className={styles.noData}>Nothing is selected</div>
         )}
       </div>
     </div>

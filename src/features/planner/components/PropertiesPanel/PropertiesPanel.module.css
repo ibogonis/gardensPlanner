@@ -1,20 +1,117 @@
 .panel {
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
-  }
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
 
-  .properties {
-    margin-top: 10px;
-  }
-  
-  .key {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    align-items: center;
-    height: 25px;
-  }
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+.properties {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.key {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.key:hover {
+  background: #f9fafb;
+}
+
+/* Green highlight for Grow row */
+.growRow {
+  background: #f0fdf4;
+  position: relative;
+}
+
+.growRow::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  background: #22c55e;
+  border-radius: 0 9999px 9999px 0;
+}
+
+.keyLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.value {
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  padding: 0 10px;
+  background: white;
+  font-size: 14px;
+  color: #111827;
+  min-width: 120px;
+}
+
+.value:focus {
+  outline: none;
+  border-color: #22c55e;
+}
+
+.colorPicker {
+  width: 40px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e5e5e5;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.colorPicker:hover {
+  border-color: #9ca3af;
+}
+
+.deleteButton {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  align-self: center;
+}
+
+.deleteButton:hover {
+  background: #e5e7eb;
+}
+
+.noData {
+  padding: 24px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+}
 
   
   

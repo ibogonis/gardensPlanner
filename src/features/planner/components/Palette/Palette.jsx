@@ -28,19 +28,21 @@ const handleDragStart = (event) => {
 export function Palette() {
   return (
     <div className={styles.palette}>
-      <h4>Shapes</h4>
-      <div
-        className={`${styles.shape} ${styles.rectangle}`}
-        data-shape={SHAPE_TYPES.RECT}
-        draggable
-        onDragStart={handleDragStart}
-      />
-      <div
-        className={`${styles.shape} ${styles.circle}`}
-        data-shape={SHAPE_TYPES.CIRCLE}
-        draggable
-        onDragStart={handleDragStart}
-      />
+      <h3 className={styles.title}>Shapes</h3>
+      <div className={styles.shapes}>
+        <div
+          className={`${styles.shape} ${styles.rectangle}`}
+          data-shape={SHAPE_TYPES.RECT}
+          draggable
+          onDragStart={handleDragStart}
+        />
+        <div
+          className={`${styles.shape} ${styles.circle}`}
+          data-shape={SHAPE_TYPES.CIRCLE}
+          draggable
+          onDragStart={handleDragStart}
+        />
+      </div>
     </div>
   );
 }

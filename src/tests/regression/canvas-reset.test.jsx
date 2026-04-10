@@ -30,7 +30,7 @@ describe("Regression: Canvas stability after reset", () => {
     mockState.currentPlan.plantings = {};
   });
 
-  test("renders with empty state", () => {
+  test("renders when no shapes exist", () => {
     render(<Canvas />);
     expect(screen.getByText(/name your garden/i)).toBeInTheDocument();
   });

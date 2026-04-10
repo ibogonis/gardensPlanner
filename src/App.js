@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+
 import HomePage from "./features/static-pages/HomePage";
 import PlannerPage from "./features/planner/pages/PlannerPage";
 import ContactsPage from "./features/static-pages/ContactsPage";
@@ -6,25 +8,32 @@ import NotFoundPage from "./features/static-pages/NotFoundPage";
 import BlogPage from "./features/blog/pages/BlogPage";
 import ArticlePage from "./features/blog/pages/ArticlePage";
 import LoginPage from "./features/auth/pages/LoginPage";
+
 import "./App.css";
+
 import MainLayout from "./shared/ui/Layout/MainLayout";
 import { AuthProvider } from "./app/providers/AuthProvider";
+import { AuthGuard } from "./app/providers/AuthGuard";
 import { useGardenStore } from "./features/planner/store/useGardenStore";
-import { useEffect } from "react";
 
 function App() {
-  const hydrate = useGardenStore.persist.rehydrate;
-  const hasHydrated = useGardenStore.persist.hasHydrated();
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    const unsub = useGardenStore.persist.onFinishHydration(() => {
+      setHasHydrated(true);
+    });
+
+    useGardenStore.persist.rehydrate();
+
+    return () => unsub();
+  }, []);
 
   if (!hasHydrated) return null;
 
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <AuthGuard>
         <div className="App">
           <Routes>
             <Route path="/" element={<MainLayout />}>
@@ -38,7 +47,7 @@ function App() {
             </Route>
           </Routes>
         </div>
-      </BrowserRouter>
+      </AuthGuard>
     </AuthProvider>
   );
 }

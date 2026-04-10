@@ -1,0 +1,194 @@
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.fields {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.input {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: 16px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.gardenIcon {
+  font-size: 20px;
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+}
+
+.buttonEdit {
+  padding: 6px 12px;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.buttonEdit:hover {
+  background: #f5f5f5;
+  border-color: #666;
+  color: #333;
+}
+
+.gardenName {
+  font-weight: 600;
+  color: #333;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.separator {
+  color: #999;
+  margin: 0 4px;
+}
+
+.year {
+  color: #666;
+  font-weight: 500;
+}
+
+.inputInline {
+  padding: 4px 8px;
+  border: 1px solid #4CAF50;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 150px;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inputInline.inputError {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.inputInline.inputError:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.inputInlineYear {
+  padding: 4px 8px;
+  border: 1px solid #4CAF50;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  width: 80px;
+}
+
+.centerSection {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.rightSection {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.button {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.button:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.buttonPrimary {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #4CAF50;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.buttonPrimary:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.buttonNew {
+  padding: 8px 16px;
+  border: 1px solid #2196F3;
+  border-radius: 4px;
+  background: #fff;
+  color: #2196F3;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.buttonNew:hover {
+  background: #E3F2FD;
+}
