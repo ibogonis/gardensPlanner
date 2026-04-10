@@ -37,7 +37,8 @@ const initialState = {
   currentPlan: initialPlan,
   currentGarden: null, // Current garden being worked on
   gardens: [], // List of all gardens
-  plans: [],
+  seasonPlans: [], // Season plans for the selected garden
+  //plans: [],
   versions: [], // Version history for current plan
   isSaving: false,
   isPreviewMode: false,
@@ -351,34 +352,6 @@ export const useGardenStore = create(
         }
       },
 
-      fetchPlans: async () => {
-        const plans = await planService.getPlans();
-        set({ plans });
-        return plans;
-      },
-
-      loadPlan: async (id) => {
-        const plan = await planService.getPlan(id);
-
-        set({
-          currentLayout: {
-            ...initialLayout,
-            ...plan.layout,
-            shapes: plan.layout?.shapes || {},
-          },
-          currentPlan: {
-            id: plan._id,
-            name: plan.name,
-            year: plan.year,
-            layoutId: plan.layout?.id || initialLayout.id,
-            plantings: plan.plantings || {},
-          },
-          selected: null,
-        });
-
-        return plan;
-      },
-
       // ─────────────────────────────────────────────────────────
       // Garden Management (New API)
       // ─────────────────────────────────────────────────────────
@@ -442,9 +415,9 @@ export const useGardenStore = create(
       },
 
       fetchSeasonPlans: async (gardenId) => {
-        const plans = await planService.getSeasonPlans(gardenId);
-        set({ plans });
-        return plans;
+        const seasonPlans = await planService.getSeasonPlans(gardenId);
+        set({ seasonPlans });
+        return seasonPlans;
       },
 
       getVersionHistory: async (seasonPlanId) => {
@@ -531,11 +504,16 @@ export const useGardenStore = create(
         set({ currentGarden: garden });
 
         // Fetch season plans for this garden
-        const plans = await get().fetchSeasonPlans(gardenId);
+        const seasonPlans = await get().fetchSeasonPlans(gardenId);
 
-        // Load the most recent season plan
-        if (plans.length > 0) {
-          await get().selectPlan(plans[0]._id);
+        const { currentPlan } = get();
+        if (currentPlan?.id) {
+          return garden;
+        }
+        const exists = seasonPlans.find((p) => p._id === currentPlan?.id);
+
+        if (!exists && seasonPlans.length > 0) {
+          await get().selectPlan(seasonPlans[0]._id);
         }
 
         return garden;
@@ -593,13 +571,13 @@ export const useGardenStore = create(
       },
 
       updateSeasonYear: async (newYear) => {
-        const { currentPlan, currentLayout, plans } = get();
+        const { currentPlan, currentLayout, seasonPlans } = get();
         if (!currentPlan?.id) {
           throw new Error("No current season plan to update");
         }
 
         // Check if a season with this year already exists for this garden
-        const existingSeason = plans.find(
+        const existingSeason = seasonPlans.find(
           (plan) => plan.year === newYear && plan._id !== currentPlan.id,
         );
 
@@ -622,12 +600,12 @@ export const useGardenStore = create(
           produce((state) => {
             ensurePlan(state);
             state.currentPlan.year = newYear;
-            // Also update the plan in the plans array
-            const planIndex = state.plans.findIndex(
+            // Also update the plan in the seasonPlans array
+            const planIndex = state.seasonPlans.findIndex(
               (p) => p._id === state.currentPlan.id,
             );
             if (planIndex !== -1) {
-              state.plans[planIndex].year = newYear;
+              state.seasonPlans[planIndex].year = newYear;
             }
           }),
         );

@@ -9,7 +9,7 @@ export function HistoryTable() {
 
   const gardens = useGardenStore((state) => state.gardens);
   const currentGarden = useGardenStore((state) => state.currentGarden);
-  const plans = useGardenStore((state) => state.plans);
+  const seasonPlans = useGardenStore((state) => state.seasonPlans);
   const currentPlan = useGardenStore((state) => state.currentPlan);
   const versions = useGardenStore((state) => state.versions);
   const isPreviewMode = useGardenStore((state) => state.isPreviewMode);
@@ -188,7 +188,7 @@ export function HistoryTable() {
             disabled={loading}
           >
             <option value="">Select a season</option>
-            {plans.map((plan) => (
+            {seasonPlans?.map((plan) => (
               <option key={plan._id} value={plan._id}>
                 {plan.year}
               </option>
