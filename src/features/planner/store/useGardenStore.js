@@ -494,23 +494,21 @@ export const useGardenStore = create(
       // ─────────────────────────────────────────────────────────
 
       selectGarden: async (gardenId) => {
-        const { gardens } = get();
-        const garden = gardens.find((g) => g._id === gardenId);
+        const { gardens, currentPlan } = get();
 
+        const garden = gardens.find((g) => g._id === gardenId);
         if (!garden) {
           throw new Error("Garden not found");
         }
 
-        set({ currentGarden: garden });
+        get().setCurrentGarden(garden);
 
-        // Fetch season plans for this garden
         const seasonPlans = await get().fetchSeasonPlans(gardenId);
 
-        const { currentPlan } = get();
-        if (currentPlan?.id) {
-          return garden;
-        }
-        const exists = seasonPlans.find((p) => p._id === currentPlan?.id);
+        const exists =
+          currentPlan &&
+          currentPlan.gardenId === gardenId &&
+          seasonPlans.some((p) => p._id === currentPlan.id);
 
         if (!exists && seasonPlans.length > 0) {
           await get().selectPlan(seasonPlans[0]._id);
@@ -520,10 +518,8 @@ export const useGardenStore = create(
       },
 
       selectPlan: async (planId) => {
-        // Load the season plan
         await get().loadSeasonPlan(planId);
 
-        // Fetch version history
         await get().getVersionHistory(planId);
       },
 
@@ -684,6 +680,8 @@ export const useGardenStore = create(
             state.currentGarden = garden;
           }),
         );
+
+        await get().fetchSeasonPlans(garden._id);
 
         // Load the new season plan
         await get().loadSeasonPlan(firstSeasonPlan._id);

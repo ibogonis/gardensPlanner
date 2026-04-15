@@ -7,41 +7,40 @@ import { useGardenStore } from "../../../features/planner/store/useGardenStore";
 
 export default function MainLayout() {
   const { user, loading } = useContext(AuthContext);
+
   useEffect(() => {
-    if (!loading) {
-      const store = useGardenStore.getState();
+  if (loading) return;
 
-      if (user) {
-        // User is logged in - fetch their gardens and load the first season plan
-        const init = async () => {
-          try {
-            // Fetch all gardens
-            const gardens = await store.fetchGardens();
+  const store = useGardenStore.getState();
 
-            if (gardens.length > 0) {
-              // Set the first garden as current
-              store.setCurrentGarden(gardens[0]);
-
-              // Fetch season plans for the first garden
-              const seasonPlans = await store.fetchSeasonPlans(gardens[0]._id);
-
-              if (seasonPlans.length > 0) {
-                // Load the most recent season plan
-                await store.loadSeasonPlan(seasonPlans[0]._id);
-              }
-            }
-          } catch (error) {
-            console.error("Failed to load user data:", error);
-          }
-        };
-
-        init();
-      } else {
-        // User is logged out - clear any persisted data
+  const init = async () => {
+    try {
+      if (!user) {
         store.reset();
+        return;
       }
+
+      const gardens = await store.fetchGardens();
+      if (!gardens.length) return;
+
+      const existingGarden = store.currentGarden;
+      const selectedGarden =
+        existingGarden &&
+        gardens.some((g) => g._id === existingGarden._id)
+          ? existingGarden
+          : gardens[0];
+
+      // 🔥 один виклик замість всієї логіки
+      await store.selectGarden(selectedGarden._id);
+
+    } catch (error) {
+      console.error("Bootstrap failed:", error);
     }
-  }, [user, loading]);
+  };
+
+  init();
+}, [user, loading]);
+
   return (
     <>
       <Menu />
