@@ -28,22 +28,22 @@ const initialPlan = {
   year: getCurrentYear(),
   layoutId: "layout-1",
   plantings: {},
-  gardenId: null, // Will be set when user creates/selects a garden
+  gardenId: null,
 };
 
 const initialState = {
   selected: null,
   currentLayout: initialLayout,
   currentPlan: initialPlan,
-  currentGarden: null, // Current garden being worked on
-  gardens: [], // List of all gardens
-  seasonPlans: [], // Season plans for the selected garden
-  //plans: [],
-  versions: [], // Version history for current plan
+  currentGarden: null,
+  gardens: [],
+  seasonPlans: [],
+
+  versions: [],
   isSaving: false,
   isPreviewMode: false,
   previewVersionId: null,
-  savedStateBeforePreview: null, // Store state before preview
+  savedStateBeforePreview: null,
 };
 
 const ensureLayout = (state) => {
@@ -254,7 +254,6 @@ export const useGardenStore = create(
             hasShapes: Object.keys(currentLayout?.shapes || {}).length,
           });
 
-          // Auto-create a garden if none exists
           if (!currentPlan.gardenId) {
             console.log("No gardenId, creating new garden...");
             const gardenTitle = currentLayout.name || "My Garden";
@@ -264,7 +263,7 @@ export const useGardenStore = create(
               console.log(
                 "Garden created successfully, continuing with save...",
               );
-              // Refresh state after garden creation
+
               const state = get();
               currentLayout = state.currentLayout;
               currentPlan = state.currentPlan;
@@ -286,7 +285,6 @@ export const useGardenStore = create(
             comment: "Manual save",
           };
 
-          // If plan has an ID (exists in DB), update it (creates new version)
           if (currentPlan.id) {
             console.log("Updating existing plan:", currentPlan.id);
             const updated = await planService.updateSeasonPlan(
@@ -294,7 +292,6 @@ export const useGardenStore = create(
               payload,
             );
 
-            // Update the store with new version info
             set(
               produce((state) => {
                 ensurePlan(state);
@@ -306,7 +303,6 @@ export const useGardenStore = create(
             return updated;
           }
 
-          // Create new season plan
           const newPlanPayload = {
             gardenId: currentPlan.gardenId,
             year: currentPlan.year,
@@ -324,7 +320,6 @@ export const useGardenStore = create(
             const created = await planService.createSeasonPlan(newPlanPayload);
             console.log("Season plan created successfully:", created);
 
-            // Update the store with new plan info
             set(
               produce((state) => {
                 ensurePlan(state);
@@ -369,10 +364,10 @@ export const useGardenStore = create(
           produce((state) => {
             state.gardens.push(garden);
             state.currentGarden = garden;
-            // Set gardenId for current plan
+
             ensurePlan(state);
             state.currentPlan.gardenId = garden._id;
-            // Reset plan ID so next save creates a new season plan
+
             state.currentPlan.id = null;
           }),
         );
@@ -389,7 +384,6 @@ export const useGardenStore = create(
           }),
         ),
 
-      // Load season plan with new API
       loadSeasonPlan: async (id) => {
         const seasonPlan = await planService.getSeasonPlan(id);
 
@@ -429,11 +423,10 @@ export const useGardenStore = create(
       restoreVersion: async (versionId) => {
         const result = await planService.restoreVersion(versionId);
 
-        // Reload the current plan to reflect restored version
         const { currentPlan } = get();
         if (currentPlan.id) {
           await get().loadSeasonPlan(currentPlan.id);
-          // Refresh version history
+
           await get().getVersionHistory(currentPlan.id);
         }
 
@@ -447,13 +440,11 @@ export const useGardenStore = create(
       previewVersion: async (versionId) => {
         const { currentLayout, currentPlan } = get();
 
-        // Save current state before preview
         const savedState = {
           layout: { ...currentLayout },
           plan: { ...currentPlan },
         };
 
-        // Fetch the version snapshot
         const version = await planService.getVersion(versionId);
 
         set(
@@ -461,7 +452,7 @@ export const useGardenStore = create(
             state.isPreviewMode = true;
             state.previewVersionId = versionId;
             state.savedStateBeforePreview = savedState;
-            // Load preview snapshot
+
             state.currentLayout = {
               ...initialLayout,
               ...version.layout,
@@ -529,14 +520,12 @@ export const useGardenStore = create(
           throw new Error("No current version to update");
         }
 
-        // Update the Garden document in backend
         if (currentGarden?._id) {
           await gardenService.updateGarden(currentGarden._id, {
             title: newName,
           });
         }
 
-        // Update in backend via updateSeasonPlan with new name
         await planService.updateSeasonPlan(currentPlan.id, {
           year: currentPlan.year,
           layout: {
@@ -547,14 +536,13 @@ export const useGardenStore = create(
           comment: "Updated garden name",
         });
 
-        // Update local state
         set(
           produce((state) => {
             ensureLayout(state);
             state.currentLayout.name = newName;
             if (state.currentGarden) {
               state.currentGarden.title = newName;
-              // Also update the garden in the gardens array
+
               const gardenIndex = state.gardens.findIndex(
                 (g) => g._id === state.currentGarden._id,
               );
@@ -572,7 +560,6 @@ export const useGardenStore = create(
           throw new Error("No current season plan to update");
         }
 
-        // Check if a season with this year already exists for this garden
         const existingSeason = seasonPlans.find(
           (plan) => plan.year === newYear && plan._id !== currentPlan.id,
         );
@@ -583,7 +570,6 @@ export const useGardenStore = create(
           );
         }
 
-        // Update in backend
         await planService.updateSeasonPlan(currentPlan.id, {
           year: newYear,
           layout: currentLayout,
@@ -591,12 +577,11 @@ export const useGardenStore = create(
           comment: "Updated year",
         });
 
-        // Update local state
         set(
           produce((state) => {
             ensurePlan(state);
             state.currentPlan.year = newYear;
-            // Also update the plan in the seasonPlans array
+
             const planIndex = state.seasonPlans.findIndex(
               (p) => p._id === state.currentPlan.id,
             );
@@ -620,17 +605,14 @@ export const useGardenStore = create(
         let layoutToUse = { ...initialLayout };
         let plantingsToUse = {};
 
-        // If copying layout from existing season
         if (layoutSource === "copy" && sourceSeasonId) {
-          // Use current layout and plantings as source
           layoutToUse = {
             ...currentLayout,
-            id: nanoid(), // New layout ID
+            id: nanoid(),
           };
-          // Don't copy plantings - new season should have empty crops
+
           plantingsToUse = {};
         } else {
-          // Empty garden
           layoutToUse = {
             ...initialLayout,
             id: nanoid(),
@@ -638,7 +620,6 @@ export const useGardenStore = create(
           };
         }
 
-        // Create new season plan
         const newSeasonPlan = await planService.createSeasonPlan({
           gardenId: currentGarden._id,
           year,
@@ -647,20 +628,16 @@ export const useGardenStore = create(
           comment: "New season created",
         });
 
-        // Load the new season plan into current state
         await get().loadSeasonPlan(newSeasonPlan._id);
 
-        // Refresh season plans list
         await get().fetchSeasonPlans(currentGarden._id);
 
         return newSeasonPlan;
       },
 
       createNewGarden: async ({ title, firstYear }) => {
-        // Create garden
         const garden = await gardenService.createGarden({ title });
 
-        // Create first season plan with empty layout
         const firstSeasonPlan = await planService.createSeasonPlan({
           gardenId: garden._id,
           year: firstYear,
@@ -673,7 +650,6 @@ export const useGardenStore = create(
           comment: "Initial season",
         });
 
-        // Update state
         set(
           produce((state) => {
             state.gardens.push(garden);
@@ -683,10 +659,8 @@ export const useGardenStore = create(
 
         await get().fetchSeasonPlans(garden._id);
 
-        // Load the new season plan
         await get().loadSeasonPlan(firstSeasonPlan._id);
 
-        // Refresh gardens list
         await get().fetchGardens();
 
         return { garden, firstSeasonPlan };
