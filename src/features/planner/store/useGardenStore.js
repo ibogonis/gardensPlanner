@@ -33,17 +33,26 @@ const initialPlan = {
 
 const initialState = {
   selected: null,
-  currentLayout: initialLayout,
-  currentPlan: initialPlan,
+
+  currentLayout: { ...initialLayout },
+  currentPlan: { ...initialPlan },
+
   currentGarden: null,
   gardens: [],
   seasonPlans: [],
-
   versions: [],
+
   isSaving: false,
+
+  // preview (тимчасово залишаємо)
   isPreviewMode: false,
   previewVersionId: null,
   savedStateBeforePreview: null,
+
+  // draft
+  draftPlan: null,
+  draftLayout: null,
+  hasUnsavedChanges: false,
 };
 
 const ensureLayout = (state) => {
@@ -387,22 +396,31 @@ export const useGardenStore = create(
       loadSeasonPlan: async (id) => {
         const seasonPlan = await planService.getSeasonPlan(id);
 
+        const layout = {
+          ...initialLayout,
+          ...seasonPlan.layout,
+          shapes: seasonPlan.layout?.shapes || {},
+        };
+
+        const plan = {
+          id: seasonPlan._id,
+          gardenId: seasonPlan.gardenId,
+          name: seasonPlan.layout?.name || "My garden",
+          year: seasonPlan.year,
+          layoutId: seasonPlan.layout?.id || initialLayout.id,
+          plantings: seasonPlan.plantings || {},
+          currentVersionId: seasonPlan.currentVersionId,
+        };
+
         set({
-          currentLayout: {
-            ...initialLayout,
-            ...seasonPlan.layout,
-            shapes: seasonPlan.layout?.shapes || {},
-          },
-          currentPlan: {
-            id: seasonPlan._id,
-            gardenId: seasonPlan.gardenId,
-            name: seasonPlan.layout?.name || "My garden",
-            year: seasonPlan.year,
-            layoutId: seasonPlan.layout?.id || initialLayout.id,
-            plantings: seasonPlan.plantings || {},
-            currentVersionId: seasonPlan.currentVersionId,
-          },
+          currentLayout: layout,
+          currentPlan: plan,
+
+          draftLayout: structuredClone(layout),
+          draftPlan: structuredClone(plan),
+
           selected: null,
+          hasUnsavedChanges: false,
         });
 
         return seasonPlan;
@@ -429,7 +447,11 @@ export const useGardenStore = create(
 
           await get().getVersionHistory(currentPlan.id);
         }
-
+        set({
+          isPreviewMode: false,
+          previewVersionId: null,
+          savedStateBeforePreview: null,
+        });
         return result;
       },
 
@@ -471,9 +493,18 @@ export const useGardenStore = create(
             produce((state) => {
               state.isPreviewMode = false;
               state.previewVersionId = null;
+
               state.currentLayout = savedStateBeforePreview.layout;
               state.currentPlan.plantings =
                 savedStateBeforePreview.plan.plantings;
+              console.log(state.currentLayout);
+              state.draftLayout = JSON.parse(
+                JSON.stringify(state.currentLayout),
+              );
+              state.draftPlan = JSON.parse(JSON.stringify(state.currentPlan));
+
+              state.hasUnsavedChanges = false;
+
               state.savedStateBeforePreview = null;
             }),
           );
