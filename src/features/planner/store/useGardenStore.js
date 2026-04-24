@@ -94,13 +94,21 @@ export const useGardenStore = create(
           }),
         ),
 
-      createRectangle: ({ x, y }) =>
+      createRectangle: ({ x, y }) => {
+        const { draftLayout, currentLayout } = get();
+
+        const baseLayout =
+          draftLayout ?? JSON.parse(JSON.stringify(currentLayout));
+
         set(
           produce((state) => {
-            ensureLayout(state);
+            if (!state.draftLayout) {
+              state.draftLayout = baseLayout;
+            }
+
             const id = nanoid();
 
-            state.currentLayout.shapes[id] = {
+            state.draftLayout.shapes[id] = {
               id,
               type: SHAPE_TYPES.RECT,
               role: "bed",
@@ -112,28 +120,40 @@ export const useGardenStore = create(
               x,
               y,
             };
+            state.selected = id;
+            state.hasUnsavedChanges = true;
           }),
-        ),
+        );
+      },
 
-      createCircle: ({ x, y }) =>
+      createCircle: ({ x, y }) => {
+        const { draftLayout, currentLayout } = get();
+
+        const baseLayout =
+          draftLayout ?? JSON.parse(JSON.stringify(currentLayout));
         set(
           produce((state) => {
-            ensureLayout(state);
+            if (!state.draftLayout) {
+              state.draftLayout = baseLayout;
+            }
             const id = nanoid();
 
-            state.currentLayout.shapes[id] = {
+            state.draftLayout.shapes[id] = {
               id,
               type: SHAPE_TYPES.CIRCLE,
               role: "bed",
               radius: DEFAULTS.CIRCLE.RADIUS,
               rotation: 0,
-              fill: DEFAULTS.RECT.FILL,
-              stroke: DEFAULTS.RECT.STROKE,
+              fill: DEFAULTS.CIRCLE.FILL,
+              stroke: DEFAULTS.CIRCLE.STROKE,
               x,
               y,
             };
+            state.selected = id;
+            state.hasUnsavedChanges = true;
           }),
-        ),
+        );
+      },
 
       deleteShape: (id) =>
         set(
@@ -145,26 +165,50 @@ export const useGardenStore = create(
           }),
         ),
 
-      moveShape: (id, node) =>
+      moveShape: (id, node) => {
+        const { draftLayout, currentLayout } = get();
+
+        const baseLayout =
+          draftLayout ?? JSON.parse(JSON.stringify(currentLayout));
+
         set(
           produce((state) => {
-            ensureLayout(state);
-            const shape = state.currentLayout.shapes[id];
+            if (!state.draftLayout) {
+              state.draftLayout = baseLayout;
+            }
+
+            const shape = state.draftLayout.shapes[id];
             if (!shape) return;
+
             shape.x = node.x();
             shape.y = node.y();
-          }),
-        ),
 
-      updateAttribute: (attr, value) =>
+            state.hasUnsavedChanges = true;
+          }),
+        );
+      },
+
+      updateAttribute: (attr, value) => {
+        const { draftLayout, currentLayout, selected } = get();
+
+        const baseLayout =
+          draftLayout ?? JSON.parse(JSON.stringify(currentLayout));
+
         set(
           produce((state) => {
-            ensureLayout(state);
-            const shape = state.currentLayout.shapes[state.selected];
+            if (!state.draftLayout) {
+              state.draftLayout = baseLayout;
+            }
+
+            const shape = state.draftLayout.shapes[selected];
             if (!shape) return;
+
             shape[attr] = value;
+
+            state.hasUnsavedChanges = true;
           }),
-        ),
+        );
+      },
 
       transformRectangleShape: (node, id) =>
         set(
@@ -247,107 +291,69 @@ export const useGardenStore = create(
 
       saveCurrentPlan: async () => {
         const { isSaving } = get();
-        if (isSaving) {
-          console.warn("Save already in progress");
-          return;
-        }
+        if (isSaving) return;
+
         try {
           set({ isSaving: true });
-          console.log("=== Starting saveCurrentPlan ===");
-          let { currentLayout, currentPlan, createGarden } = get();
-          console.log("Current plan state:", {
-            id: currentPlan.id,
-            gardenId: currentPlan.gardenId,
-            year: currentPlan.year,
-            hasLayout: !!currentLayout,
-            hasShapes: Object.keys(currentLayout?.shapes || {}).length,
-          });
 
-          if (!currentPlan.gardenId) {
-            console.log("No gardenId, creating new garden...");
-            const gardenTitle = currentLayout.name || "My Garden";
-            try {
-              console.log("Calling createGarden with title:", gardenTitle);
-              await createGarden(gardenTitle);
-              console.log(
-                "Garden created successfully, continuing with save...",
-              );
+          let {
+            draftLayout,
+            draftPlan,
+            currentLayout,
+            currentPlan,
+            createGarden,
+          } = get();
 
-              const state = get();
-              currentLayout = state.currentLayout;
-              currentPlan = state.currentPlan;
-            } catch (error) {
-              console.error(
-                "Failed to create garden:",
-                error.response || error,
-              );
-              throw new Error(
-                `Failed to create garden: ${error.response?.status || error.message}`,
-              );
-            }
+          let layoutToSave = draftLayout ?? currentLayout;
+          let planToSave = draftPlan ?? currentPlan;
+
+          if (!planToSave.gardenId) {
+            const gardenTitle = layoutToSave.name || "My Garden";
+
+            await createGarden(gardenTitle);
+
+            const state = get();
+
+            layoutToSave = state.draftLayout ?? state.currentLayout;
+            planToSave = state.draftPlan ?? state.currentPlan;
           }
 
           const payload = {
-            year: currentPlan.year,
-            layout: currentLayout,
-            plantings: currentPlan.plantings,
+            year: planToSave.year,
+            layout: layoutToSave,
+            plantings: planToSave.plantings,
             comment: "Manual save",
           };
 
-          if (currentPlan.id) {
-            console.log("Updating existing plan:", currentPlan.id);
-            const updated = await planService.updateSeasonPlan(
-              currentPlan.id,
-              payload,
-            );
+          let result;
 
-            set(
-              produce((state) => {
-                ensurePlan(state);
-                state.currentPlan.id = updated._id;
-                state.currentPlan.currentVersionId = updated.currentVersionId;
-              }),
-            );
-
-            return updated;
+          if (planToSave.id) {
+            result = await planService.updateSeasonPlan(planToSave.id, payload);
+          } else {
+            result = await planService.createSeasonPlan({
+              gardenId: planToSave.gardenId,
+              ...payload,
+            });
           }
 
-          const newPlanPayload = {
-            gardenId: currentPlan.gardenId,
-            year: currentPlan.year,
-            ...payload,
-          };
+          set(
+            produce((state) => {
+              state.currentLayout = layoutToSave;
+              state.currentPlan = {
+                ...planToSave,
+                id: result._id,
+                gardenId: result.gardenId,
+                currentVersionId: result.currentVersionId,
+              };
 
-          console.log(
-            "Creating new season plan for garden:",
-            currentPlan.gardenId,
-            "Payload:",
-            newPlanPayload,
+              state.draftLayout = JSON.parse(JSON.stringify(layoutToSave));
+              state.draftPlan = JSON.parse(JSON.stringify(state.currentPlan));
+
+              state.hasUnsavedChanges = false;
+            }),
           );
 
-          try {
-            const created = await planService.createSeasonPlan(newPlanPayload);
-            console.log("Season plan created successfully:", created);
-
-            set(
-              produce((state) => {
-                ensurePlan(state);
-                state.currentPlan.id = created._id;
-                state.currentPlan.gardenId = created.gardenId;
-                state.currentPlan.currentVersionId = created.currentVersionId;
-              }),
-            );
-
-            return created;
-          } catch (error) {
-            console.error(
-              "Failed to create season plan:",
-              error.response || error,
-            );
-            throw new Error(
-              `Failed to create season plan: ${error.response?.status} - ${error.response?.data?.message || error.message}`,
-            );
-          }
+          return result;
         } catch (error) {
           console.error("saveCurrentPlan error:", error);
           throw error;

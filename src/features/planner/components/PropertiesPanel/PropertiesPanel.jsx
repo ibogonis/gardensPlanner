@@ -9,20 +9,24 @@ export function PropertiesPanel() {
   // ─────────────────────────
 
   const selectedId = useGardenStore((state) => state.selected);
-  const shapes = useGardenStore((state) => state.currentLayout.shapes);
-  const plantings = useGardenStore((state) => state.currentPlan.plantings);
+
+  const draftLayout = useGardenStore((state) => state.draftLayout);
+  const currentLayout = useGardenStore((state) => state.currentLayout);
+
+  const draftPlan = useGardenStore((state) => state.draftPlan);
+  const currentPlan = useGardenStore((state) => state.currentPlan);
 
   const updateAttribute = useGardenStore((state) => state.updateAttribute);
-
   const deleteShape = useGardenStore((state) => state.deleteShape);
-
   const setPlanting = useGardenStore((state) => state.setPlanting);
-
   const clearSelection = useGardenStore((state) => state.clearSelection);
 
   // ─────────────────────────
   // Derived values
   // ─────────────────────────
+
+  const shapes = draftLayout?.shapes ?? currentLayout?.shapes ?? {};
+  const plantings = draftPlan?.plantings ?? currentPlan?.plantings ?? {};
 
   const selectedShape = selectedId ? shapes[selectedId] : null;
   const selectedCrop = selectedId ? plantings[selectedId]?.crop || "" : "";
@@ -63,7 +67,6 @@ export function PropertiesPanel() {
       <div className={styles.properties}>
         {selectedShape ? (
           <>
-            {/* Grow - with green highlight */}
             <div className={`${styles.key} ${styles.growRow}`}>
               <span className={styles.keyLabel}>Grow</span>
               <select
@@ -80,7 +83,6 @@ export function PropertiesPanel() {
               </select>
             </div>
 
-            {/* Stroke */}
             <div className={styles.key}>
               <span className={styles.keyLabel}>Stroke</span>
               <input
@@ -92,7 +94,6 @@ export function PropertiesPanel() {
               />
             </div>
 
-            {/* Fill */}
             <div className={styles.key}>
               <span className={styles.keyLabel}>Fill</span>
               <input
