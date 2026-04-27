@@ -78,13 +78,24 @@ export const useGardenStore = create(
     (set, get) => ({
       ...initialState,
 
-      setLayoutName: (name) =>
+      setLayoutName: (name) => {
+        const { draftLayout, currentLayout } = get();
+
+        const baseLayout =
+          draftLayout ?? JSON.parse(JSON.stringify(currentLayout));
+
         set(
           produce((state) => {
-            ensurePlan(state);
-            state.currentLayout.name = name;
+            if (!state.draftLayout) {
+              state.draftLayout = baseLayout;
+            }
+
+            state.draftLayout.name = name;
+
+            state.hasUnsavedChanges = true;
           }),
-        ),
+        );
+      },
 
       setYear: (year) =>
         set(
@@ -155,15 +166,46 @@ export const useGardenStore = create(
         );
       },
 
-      deleteShape: (id) =>
+      deleteShape: (id) => {
+        const { draftLayout, currentLayout, draftPlan, currentPlan } = get();
+
+        const baseLayout =
+          draftLayout ?? JSON.parse(JSON.stringify(currentLayout));
+
+        const basePlan = draftPlan ?? JSON.parse(JSON.stringify(currentPlan));
+
         set(
           produce((state) => {
-            ensureLayout(state);
-            ensurePlan(state);
-            delete state.currentLayout.shapes[id];
-            delete state.currentPlan.plantings[id];
+            // 🔹 init draftLayout
+            if (!state.draftLayout) {
+              state.draftLayout = baseLayout;
+            }
+
+            // 🔹 init draftPlan
+            if (!state.draftPlan) {
+              state.draftPlan = basePlan;
+            }
+
+            // 🔥 1. видаляємо shape
+            if (state.draftLayout.shapes[id]) {
+              delete state.draftLayout.shapes[id];
+            }
+
+            // 🔥 2. видаляємо planting
+            if (state.draftPlan?.plantings?.[id]) {
+              delete state.draftPlan.plantings[id];
+            }
+
+            // 🔥 3. якщо він був selected → очищаємо
+            if (state.selected === id) {
+              state.selected = null;
+            }
+
+            // 🔥 4. помічаємо зміни
+            state.hasUnsavedChanges = true;
           }),
-        ),
+        );
+      },
 
       moveShape: (id, node) => {
         const { draftLayout, currentLayout } = get();
@@ -210,15 +252,35 @@ export const useGardenStore = create(
         );
       },
 
-      transformRectangleShape: (node, id) =>
+      transformRectangleShape: (node, id) => {
+        const { draftLayout, currentLayout } = get();
+
+        const baseLayout =
+          draftLayout ?? JSON.parse(JSON.stringify(currentLayout));
+
         set(
           produce((state) => {
-            ensureLayout(state);
-            const shape = state.currentLayout.shapes[id];
+            if (!state.draftLayout) {
+              state.draftLayout = baseLayout;
+            }
+
+            const shape = state.draftLayout.shapes[id];
             if (!shape) return;
 
             const scaleX = node.scaleX();
             const scaleY = node.scaleY();
+
+            const newWidth = clamp(
+              node.width() * scaleX,
+              LIMITS.RECT.MIN,
+              LIMITS.RECT.MAX,
+            );
+
+            const newHeight = clamp(
+              node.height() * scaleY,
+              LIMITS.RECT.MIN,
+              LIMITS.RECT.MAX,
+            );
 
             node.scaleX(1);
             node.scaleY(1);
@@ -226,20 +288,13 @@ export const useGardenStore = create(
             shape.x = node.x();
             shape.y = node.y();
             shape.rotation = node.rotation();
+            shape.width = newWidth;
+            shape.height = newHeight;
 
-            shape.width = clamp(
-              node.width() * scaleX,
-              LIMITS.RECT.MIN,
-              LIMITS.RECT.MAX,
-            );
-
-            shape.height = clamp(
-              node.height() * scaleY,
-              LIMITS.RECT.MIN,
-              LIMITS.RECT.MAX,
-            );
+            state.hasUnsavedChanges = true;
           }),
-        ),
+        );
+      },
 
       transformCircleShape: (node, id) =>
         set(
@@ -263,21 +318,51 @@ export const useGardenStore = create(
           }),
         ),
 
-      setPlanting: (shapeId, crop) =>
-        set(
-          produce((state) => {
-            ensurePlan(state);
-            state.currentPlan.plantings[shapeId] = { crop };
-          }),
-        ),
+      setPlanting: (shapeId, crop) => {
+        const { draftPlan, currentPlan } = get();
 
-      removePlanting: (shapeId) =>
+        const basePlan = draftPlan ?? JSON.parse(JSON.stringify(currentPlan));
+
         set(
           produce((state) => {
-            ensurePlan(state);
-            delete state.currentPlan.plantings[shapeId];
+            if (!state.draftPlan) {
+              state.draftPlan = basePlan;
+            }
+
+            if (!state.draftPlan.plantings) {
+              state.draftPlan.plantings = {};
+            }
+
+            if (!state.draftPlan.plantings[shapeId]) {
+              state.draftPlan.plantings[shapeId] = {};
+            }
+
+            state.draftPlan.plantings[shapeId].crop = crop;
+
+            state.hasUnsavedChanges = true;
           }),
-        ),
+        );
+      },
+
+      removePlanting: (shapeId) => {
+        const { draftPlan, currentPlan } = get();
+
+        const basePlan = draftPlan ?? JSON.parse(JSON.stringify(currentPlan));
+
+        set(
+          produce((state) => {
+            if (!state.draftPlan) {
+              state.draftPlan = basePlan;
+            }
+
+            if (state.draftPlan?.plantings?.[shapeId]) {
+              delete state.draftPlan.plantings[shapeId];
+            }
+
+            state.hasUnsavedChanges = true;
+          }),
+        );
+      },
 
       selectShape: (id) => set({ selected: id }),
       clearSelection: () => set({ selected: null }),
