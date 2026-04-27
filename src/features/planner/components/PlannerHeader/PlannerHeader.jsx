@@ -15,8 +15,10 @@ export default function PlannerHeader() {
   const currentLayout = useGardenStore((state) => state.currentLayout);
   const currentGarden = useGardenStore((state) => state.currentGarden);
   const saveCurrentPlan = useGardenStore((state) => state.saveCurrentPlan);
-  const updateVersionName = useGardenStore((state) => state.updateVersionName);
-  const updateSeasonYear = useGardenStore((state) => state.updateSeasonYear);
+  
+  const setLayoutName = useGardenStore((state) => state.setLayoutName);
+  const setYear = useGardenStore((state) => state.setYear);
+  
   const reset = useGardenStore((state) => state.reset);
 
   // State 1: Before first save (no plan ID or default "plan-1")
@@ -32,24 +34,26 @@ export default function PlannerHeader() {
   };
 
   const handleSaveChanges = async () => {
-    try {
-      // Update existing entities
-      if (editedName !== gardenName) {
-        await updateVersionName(editedName);
-      }
-      if (Number(editedYear) !== seasonYear) {
-        await updateSeasonYear(Number(editedYear));
-      }
-      setIsEditing(false);
-      alert("Changes saved ✅");
-    } catch (error) {
-      console.error("Failed to save changes:", error);
-      alert(`Failed to save changes: ${error.message}`);
-      // Revert edited values to original on error
-      setEditedName(gardenName);
-      setEditedYear(seasonYear);
+  try {
+    if (editedName !== gardenName) {
+      setLayoutName(editedName); 
     }
-  };
+
+    if (Number(editedYear) !== seasonYear) {
+      setYear(Number(editedYear)); 
+    }
+
+    await saveCurrentPlan(); 
+
+    setIsEditing(false);
+    alert("Changes saved ✅");
+  } catch (error) {
+    console.error("Failed to save changes:", error);
+    alert(`Failed to save changes: ${error.message}`);
+    setEditedName(gardenName);
+    setEditedYear(seasonYear);
+  }
+};
 
   const handleCancelEdit = () => {
     setIsEditing(false);

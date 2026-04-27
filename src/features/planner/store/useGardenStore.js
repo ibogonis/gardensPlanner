@@ -97,13 +97,21 @@ export const useGardenStore = create(
         );
       },
 
-      setYear: (year) =>
+      setYear: (year) => {
+        const { draftPlan, currentPlan } = get();
+
+        const basePlan = draftPlan ?? JSON.parse(JSON.stringify(currentPlan));
+
         set(
           produce((state) => {
-            ensurePlan(state);
-            state.currentPlan.year = year;
+            if (!state.draftPlan) {
+              state.draftPlan = basePlan;
+            }
+            state.draftPlan.year = year;
+            state.hasUnsavedChanges = true;
           }),
-        ),
+        );
+      },
 
       createRectangle: ({ x, y }) => {
         const { draftLayout, currentLayout } = get();
@@ -386,6 +394,7 @@ export const useGardenStore = create(
             draftPlan,
             currentLayout,
             currentPlan,
+            currentGarden,
             createGarden,
           } = get();
 
@@ -401,6 +410,16 @@ export const useGardenStore = create(
 
             layoutToSave = state.draftLayout ?? state.currentLayout;
             planToSave = state.draftPlan ?? state.currentPlan;
+          }
+
+          if (
+            currentGarden?._id &&
+            layoutToSave.name &&
+            layoutToSave.name !== currentGarden.title
+          ) {
+            await gardenService.updateGarden(currentGarden._id, {
+              title: layoutToSave.name,
+            });
           }
 
           const payload = {
@@ -420,7 +439,7 @@ export const useGardenStore = create(
               ...payload,
             });
           }
-
+          await get().fetchSeasonPlans(planToSave.gardenId);
           set(
             produce((state) => {
               state.currentLayout = layoutToSave;
@@ -433,6 +452,18 @@ export const useGardenStore = create(
 
               state.draftLayout = JSON.parse(JSON.stringify(layoutToSave));
               state.draftPlan = JSON.parse(JSON.stringify(state.currentPlan));
+
+              if (state.currentGarden) {
+                state.currentGarden.title = layoutToSave.name;
+
+                const gardenIndex = state.gardens.findIndex(
+                  (g) => g._id === state.currentGarden._id,
+                );
+
+                if (gardenIndex !== -1) {
+                  state.gardens[gardenIndex].title = layoutToSave.name;
+                }
+              }
 
               state.hasUnsavedChanges = false;
             }),
@@ -634,84 +665,6 @@ export const useGardenStore = create(
         await get().loadSeasonPlan(planId);
 
         await get().getVersionHistory(planId);
-      },
-
-      updateVersionName: async (newName) => {
-        const { currentPlan, currentLayout, currentGarden } = get();
-        if (!currentPlan?.currentVersionId) {
-          throw new Error("No current version to update");
-        }
-
-        if (currentGarden?._id) {
-          await gardenService.updateGarden(currentGarden._id, {
-            title: newName,
-          });
-        }
-
-        await planService.updateSeasonPlan(currentPlan.id, {
-          year: currentPlan.year,
-          layout: {
-            ...currentLayout,
-            name: newName,
-          },
-          plantings: currentPlan.plantings,
-          comment: "Updated garden name",
-        });
-
-        set(
-          produce((state) => {
-            ensureLayout(state);
-            state.currentLayout.name = newName;
-            if (state.currentGarden) {
-              state.currentGarden.title = newName;
-
-              const gardenIndex = state.gardens.findIndex(
-                (g) => g._id === state.currentGarden._id,
-              );
-              if (gardenIndex !== -1) {
-                state.gardens[gardenIndex].title = newName;
-              }
-            }
-          }),
-        );
-      },
-
-      updateSeasonYear: async (newYear) => {
-        const { currentPlan, currentLayout, seasonPlans } = get();
-        if (!currentPlan?.id) {
-          throw new Error("No current season plan to update");
-        }
-
-        const existingSeason = seasonPlans.find(
-          (plan) => plan.year === newYear && plan._id !== currentPlan.id,
-        );
-
-        if (existingSeason) {
-          throw new Error(
-            `Season ${newYear} already exists for this garden. Please switch to that season if you want to modify it.`,
-          );
-        }
-
-        await planService.updateSeasonPlan(currentPlan.id, {
-          year: newYear,
-          layout: currentLayout,
-          plantings: currentPlan.plantings,
-          comment: "Updated year",
-        });
-
-        set(
-          produce((state) => {
-            ensurePlan(state);
-            state.currentPlan.year = newYear;
-
-            const planIndex = state.seasonPlans.findIndex(
-              (p) => p._id === state.currentPlan.id,
-            );
-            if (planIndex !== -1) {
-              state.seasonPlans[planIndex].year = newYear;
-            }
-          }),
-        );
       },
 
       // ─────────────────────────────────────────────────────────

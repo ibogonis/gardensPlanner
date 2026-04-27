@@ -9,9 +9,9 @@ const mockState = {
   currentGarden: { title: "My garden" },
 
   reset: jest.fn(),
-  saveCurrentPlan: jest.fn(),
-  updateVersionName: jest.fn(),
-  updateSeasonYear: jest.fn().mockResolvedValue(),
+  setLayoutName: jest.fn(),
+  setYear: jest.fn(),
+  saveCurrentPlan: jest.fn().mockResolvedValue({}),
 };
 
 jest.mock("../../features/planner/store/useGardenStore", () => ({
@@ -107,8 +107,9 @@ describe("PlannerHeader", () => {
 
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
-    expect(mockState.updateVersionName).toHaveBeenCalledWith("New garden name");
-    expect(mockState.updateSeasonYear).toHaveBeenCalledWith(2025);
+    expect(mockState.setLayoutName).toHaveBeenCalledWith("New garden name");
+    expect(mockState.setYear).toHaveBeenCalledWith(2025);
+    expect(mockState.saveCurrentPlan).toHaveBeenCalled();
 
     await waitFor(() => {
       expect(
