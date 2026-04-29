@@ -78,25 +78,6 @@ export const useGardenStore = create(
     (set, get) => ({
       ...initialState,
 
-      setLayoutName: (name) => {
-        const { draftLayout, currentLayout } = get();
-
-        const baseLayout =
-          draftLayout ?? JSON.parse(JSON.stringify(currentLayout));
-
-        set(
-          produce((state) => {
-            if (!state.draftLayout) {
-              state.draftLayout = baseLayout;
-            }
-
-            state.draftLayout.name = name;
-
-            state.hasUnsavedChanges = true;
-          }),
-        );
-      },
-
       setYear: (year) => {
         const { draftPlan, currentPlan } = get();
 
@@ -389,81 +370,51 @@ export const useGardenStore = create(
         try {
           set({ isSaving: true });
 
-          let {
-            draftLayout,
-            draftPlan,
-            currentLayout,
-            currentPlan,
-            currentGarden,
-            createGarden,
-          } = get();
+          const { draftLayout, draftPlan } = get();
 
-          let layoutToSave = draftLayout ?? currentLayout;
-          let planToSave = draftPlan ?? currentPlan;
-
-          if (!planToSave.gardenId) {
-            const gardenTitle = layoutToSave.name || "My Garden";
-
-            await createGarden(gardenTitle);
-
-            const state = get();
-
-            layoutToSave = state.draftLayout ?? state.currentLayout;
-            planToSave = state.draftPlan ?? state.currentPlan;
+          if (!draftLayout || !draftPlan) {
+            throw new Error("Draft state is not initialized");
           }
 
-          if (
-            currentGarden?._id &&
-            layoutToSave.name &&
-            layoutToSave.name !== currentGarden.title
-          ) {
-            await gardenService.updateGarden(currentGarden._id, {
-              title: layoutToSave.name,
-            });
+          if (!draftPlan.gardenId) {
+            throw new Error("Garden must be created before saving plan");
           }
+
+          // ❗ тільки для API
+          const { name, ...layoutWithoutName } = draftLayout;
 
           const payload = {
-            year: planToSave.year,
-            layout: layoutToSave,
-            plantings: planToSave.plantings,
+            year: draftPlan.year,
+            layout: layoutWithoutName,
+            plantings: draftPlan.plantings,
             comment: "Manual save",
           };
 
           let result;
 
-          if (planToSave.id) {
-            result = await planService.updateSeasonPlan(planToSave.id, payload);
+          if (draftPlan.id) {
+            result = await planService.updateSeasonPlan(draftPlan.id, payload);
           } else {
             result = await planService.createSeasonPlan({
-              gardenId: planToSave.gardenId,
+              gardenId: draftPlan.gardenId,
               ...payload,
             });
           }
-          await get().fetchSeasonPlans(planToSave.gardenId);
+
           set(
             produce((state) => {
-              state.currentLayout = layoutToSave;
+              // ❗ залишаємо layout як є (з name, якщо він був)
+              state.currentLayout = structuredClone(draftLayout);
+
               state.currentPlan = {
-                ...planToSave,
+                ...draftPlan,
                 id: result._id,
                 gardenId: result.gardenId,
                 currentVersionId: result.currentVersionId,
               };
 
-              state.draftLayout = JSON.parse(JSON.stringify(layoutToSave));
-              state.draftPlan = JSON.parse(JSON.stringify(state.currentPlan));
-
-              if (state.currentGarden) {
-                state.currentGarden.title = layoutToSave.name;
-
-                const gardenIndex = state.gardens.findIndex(
-                  (g) => g._id === state.currentGarden._id,
-                );
-
-                if (gardenIndex !== -1) {
-                  state.gardens[gardenIndex].title = layoutToSave.name;
-                }
-              }
+              state.draftLayout = structuredClone(state.currentLayout);
+              state.draftPlan = structuredClone(state.currentPlan);
 
               state.hasUnsavedChanges = false;
             }),
@@ -502,6 +453,12 @@ export const useGardenStore = create(
             state.currentPlan.id = null;
           }),
         );
+        const state = get();
+
+        set({
+          draftLayout: structuredClone(state.currentLayout),
+          draftPlan: structuredClone(state.currentPlan),
+        });
 
         return garden;
       },
@@ -518,16 +475,16 @@ export const useGardenStore = create(
       loadSeasonPlan: async (id) => {
         const seasonPlan = await planService.getSeasonPlan(id);
 
-        const layout = {
+        const layout = structuredClone({
           ...initialLayout,
           ...seasonPlan.layout,
           shapes: seasonPlan.layout?.shapes || {},
-        };
+        });
 
         const plan = {
           id: seasonPlan._id,
           gardenId: seasonPlan.gardenId,
-          name: seasonPlan.layout?.name || "My garden",
+          // name: seasonPlan.layout?.name || "My garden",
           year: seasonPlan.year,
           layoutId: seasonPlan.layout?.id || initialLayout.id,
           plantings: seasonPlan.plantings || {},
@@ -546,6 +503,23 @@ export const useGardenStore = create(
         });
 
         return seasonPlan;
+      },
+
+      updateGardenTitle: async (title) => {
+        const { currentGarden } = get();
+
+        if (!currentGarden?._id) return;
+
+        const updated = await gardenService.updateGarden(currentGarden._id, {
+          title,
+        });
+
+        set((state) => ({
+          currentGarden: updated,
+          gardens: state.gardens.map((g) =>
+            g._id === updated._id ? updated : g,
+          ),
+        }));
       },
 
       fetchSeasonPlans: async (gardenId) => {

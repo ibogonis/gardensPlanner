@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGardenStore } from "../../store/useGardenStore";
 import styles from "./PlannerHeader.module.css";
 import NewSeasonModal from "./NewSeasonModal";
 import NewGardenModal from "./NewGardenModal";
+
+
 
 export default function PlannerHeader() {
   const [isEditing, setIsEditing] = useState(false);
@@ -11,32 +13,38 @@ export default function PlannerHeader() {
   const [editedName, setEditedName] = useState("");
   const [editedYear, setEditedYear] = useState("");
 
+ 
   const currentPlan = useGardenStore((state) => state.currentPlan);
-  const currentLayout = useGardenStore((state) => state.currentLayout);
   const currentGarden = useGardenStore((state) => state.currentGarden);
+
   const saveCurrentPlan = useGardenStore((state) => state.saveCurrentPlan);
-  
-  const setLayoutName = useGardenStore((state) => state.setLayoutName);
+  const updateGardenTitle = useGardenStore((state) => state.updateGardenTitle);
   const setYear = useGardenStore((state) => state.setYear);
-  
+  const createGarden = useGardenStore((state) => state.createGarden);
   const reset = useGardenStore((state) => state.reset);
 
   // State 1: Before first save (no plan ID or default "plan-1")
   const isBeforeFirstSave = !currentPlan?.id || currentPlan.id === "plan-1";
 
-  const gardenName = currentLayout?.name || currentGarden?.title || "My garden";
+  const gardenName =  currentGarden?.title || "My garden";
   const seasonYear = currentPlan?.year || new Date().getFullYear();
 
+ useEffect(() => {
+setEditedName(gardenName);
+}, [gardenName]);
+
+useEffect(() => {
+setEditedYear(seasonYear);
+}, [seasonYear]);
+
   const handleEdit = () => {
-    setEditedName(gardenName);
-    setEditedYear(seasonYear);
     setIsEditing(true);
   };
 
   const handleSaveChanges = async () => {
   try {
     if (editedName !== gardenName) {
-      setLayoutName(editedName); 
+      await updateGardenTitle(editedName);
     }
 
     if (Number(editedYear) !== seasonYear) {
@@ -44,30 +52,36 @@ export default function PlannerHeader() {
     }
 
     await saveCurrentPlan(); 
-
+console.log("garden", currentGarden?.title);
+console.log("layout", currentPlan);
     setIsEditing(false);
     alert("Changes saved ✅");
   } catch (error) {
     console.error("Failed to save changes:", error);
     alert(`Failed to save changes: ${error.message}`);
-    setEditedName(gardenName);
-    setEditedYear(seasonYear);
   }
 };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setEditedName(gardenName);
+setEditedYear(seasonYear);
   };
 
   const handleSave = async () => {
-    try {
-      await saveCurrentPlan();
-      alert("Plan saved ✅");
-    } catch (error) {
-      console.error("Save failed:", error);
-      alert(`Save failed ❌: ${error.message || error}`);
+  try {
+    if (isBeforeFirstSave && editedName.trim()) {
+      await createGarden(editedName);
     }
-  };
+
+    await saveCurrentPlan();
+
+    alert("Plan saved ✅");
+  } catch (error) {
+    console.error("Save failed:", error);
+    alert(`Save failed ❌: ${error.message || error}`);
+  }
+};
 
   // State 1: Before first save
   if (isBeforeFirstSave) {
@@ -77,12 +91,10 @@ export default function PlannerHeader() {
           <div className={styles.field}>
             <label>Name your garden</label>
             <input
-              type="text"
-              value={gardenName}
-              onChange={(e) => useGardenStore.getState().setLayoutName(e.target.value)}
-              className={styles.input}
-              maxLength={80}
-            />
+  type="text"
+  value={editedName}
+  onChange={(e) => setEditedName(e.target.value)}
+/>
           </div>
           <div className={styles.field}>
             <label>Year</label>
@@ -91,8 +103,8 @@ export default function PlannerHeader() {
               min="2000"
               max="2099"
               step="1"
-              value={seasonYear}
-              onChange={(e) => useGardenStore.getState().setYear(Number(e.target.value))}
+              value={editedYear}
+              onChange={(e) => setEditedYear(e.target.value)}
               className={styles.input}
             />
           </div>
