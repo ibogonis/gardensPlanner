@@ -505,14 +505,15 @@ export const useGardenStore = create(
         return seasonPlan;
       },
 
-      updateGardenTitle: async (title) => {
+      updateGarden: async (patch) => {
         const { currentGarden } = get();
 
         if (!currentGarden?._id) return;
 
-        const updated = await gardenService.updateGarden(currentGarden._id, {
-          title,
-        });
+        const updated = await gardenService.updateGarden(
+          currentGarden._id,
+          patch,
+        );
 
         set((state) => ({
           currentGarden: updated,

@@ -18,7 +18,7 @@ export default function PlannerHeader() {
   const currentGarden = useGardenStore((state) => state.currentGarden);
 
   const saveCurrentPlan = useGardenStore((state) => state.saveCurrentPlan);
-  const updateGardenTitle = useGardenStore((state) => state.updateGardenTitle);
+  const updateGarden = useGardenStore((state) => state.updateGarden);
   const setYear = useGardenStore((state) => state.setYear);
   const createGarden = useGardenStore((state) => state.createGarden);
   const reset = useGardenStore((state) => state.reset);
@@ -44,7 +44,7 @@ setEditedYear(seasonYear);
   const handleSaveChanges = async () => {
   try {
     if (editedName !== gardenName) {
-      await updateGardenTitle(editedName);
+      await updateGarden({ title: editedName });
     }
 
     if (Number(editedYear) !== seasonYear) {
