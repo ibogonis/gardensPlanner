@@ -64,14 +64,12 @@ const ensureLayout = (state) => {
   }
 };
 
-const ensurePlan = (state) => {
-  if (!state.currentPlan) {
-    state.currentPlan = { ...initialPlan };
-  }
-  if (!state.currentPlan.plantings) {
-    state.currentPlan.plantings = {};
-  }
-};
+const createEmptyPlan = (gardenId) => ({
+  year: new Date().getFullYear(),
+  plantings: {},
+  gardenId,
+  id: null,
+});
 
 export const useGardenStore = create(
   persist(
@@ -446,45 +444,41 @@ export const useGardenStore = create(
           produce((state) => {
             state.gardens.push(garden);
             state.currentGarden = garden;
+            state.currentPlan = createEmptyPlan(garden._id);
 
-            ensurePlan(state);
-            state.currentPlan.gardenId = garden._id;
+            if (!state.currentLayout) {
+              state.currentLayout = structuredClone(initialLayout);
+            }
 
-            state.currentPlan.id = null;
+            state.draftLayout = structuredClone(state.currentLayout);
+            state.draftPlan = structuredClone(state.currentPlan);
+
+            state.hasUnsavedChanges = false;
           }),
         );
-        const state = get();
-
-        set({
-          draftLayout: structuredClone(state.currentLayout),
-          draftPlan: structuredClone(state.currentPlan),
-        });
 
         return garden;
       },
 
       setCurrentGarden: (garden) =>
-        set(
-          produce((state) => {
-            state.currentGarden = garden;
-            ensurePlan(state);
-            state.currentPlan.gardenId = garden?._id || null;
-          }),
-        ),
+        set({
+          currentGarden: garden,
+        }),
 
       loadSeasonPlan: async (id) => {
         const seasonPlan = await planService.getSeasonPlan(id);
 
+        const { name, ...layoutFromApi } = seasonPlan.layout || {};
+
         const layout = structuredClone({
           ...initialLayout,
-          ...seasonPlan.layout,
-          shapes: seasonPlan.layout?.shapes || {},
+          ...layoutFromApi,
+          shapes: layoutFromApi?.shapes || {},
         });
 
         const plan = {
           id: seasonPlan._id,
           gardenId: seasonPlan.gardenId,
-          // name: seasonPlan.layout?.name || "My garden",
           year: seasonPlan.year,
           layoutId: seasonPlan.layout?.id || initialLayout.id,
           plantings: seasonPlan.plantings || {},
@@ -613,16 +607,18 @@ export const useGardenStore = create(
       // ─────────────────────────────────────────────────────────
 
       selectGarden: async (gardenId) => {
-        const { gardens, currentPlan } = get();
+        const { gardens } = get();
 
         const garden = gardens.find((g) => g._id === gardenId);
         if (!garden) {
           throw new Error("Garden not found");
         }
 
-        get().setCurrentGarden(garden);
+        set({ currentGarden: garden });
 
         const seasonPlans = await get().fetchSeasonPlans(gardenId);
+
+        const { currentPlan } = get();
 
         const exists =
           currentPlan &&
@@ -637,9 +633,12 @@ export const useGardenStore = create(
       },
 
       selectPlan: async (planId) => {
-        await get().loadSeasonPlan(planId);
+        if (!planId) return;
 
-        await get().getVersionHistory(planId);
+        await Promise.all([
+          get().loadSeasonPlan(planId),
+          get().getVersionHistory(planId),
+        ]);
       },
 
       // ─────────────────────────────────────────────────────────
