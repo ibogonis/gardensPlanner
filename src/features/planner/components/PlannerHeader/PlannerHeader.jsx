@@ -22,6 +22,7 @@ export default function PlannerHeader() {
   const setYear = useGardenStore((state) => state.setYear);
   const createGarden = useGardenStore((state) => state.createGarden);
   const reset = useGardenStore((state) => state.reset);
+  const deleteGarden = useGardenStore((state) => state.deleteGarden);
 
   // State 1: Before first save (no plan ID or default "plan-1")
   const isBeforeFirstSave = !currentPlan?.id || currentPlan.id === "plan-1";
@@ -207,6 +208,9 @@ setEditedYear(seasonYear);
               </button>
               <button onClick={handleSave} className={styles.buttonPrimary}>
                 Save
+              </button>
+              <button onClick={() => deleteGarden(currentGarden._id)} className={styles.buttonPrimary}>
+                Delete
               </button>
             </>
           )}
