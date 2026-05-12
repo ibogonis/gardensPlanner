@@ -64,13 +64,6 @@ const ensureLayout = (state) => {
   }
 };
 
-const createEmptyPlan = (gardenId) => ({
-  year: new Date().getFullYear(),
-  plantings: {},
-  gardenId,
-  id: null,
-});
-
 export const useGardenStore = create(
   persist(
     (set, get) => ({
@@ -369,101 +362,62 @@ export const useGardenStore = create(
 
       saveCurrentPlan: async () => {
         const { isSaving } = get();
-
         if (isSaving) return;
 
         try {
           set({ isSaving: true });
 
-          let { draftLayout, draftPlan, currentGarden } = get();
+          const state = get();
 
-          // 🔥 Draft state must always exist
+          const draftLayout = structuredClone(state.draftLayout);
+          const draftPlan = structuredClone(state.draftPlan);
+
           if (!draftLayout || !draftPlan) {
             throw new Error("Draft state is not initialized");
           }
 
-          // ────────────────────────────────────────
-          // Create garden first (for new users)
-          // ────────────────────────────────────────
-
-          if (!draftPlan.gardenId) {
-            await get().createGarden(currentGarden?.title || "My garden");
-
-            // ❗ VERY IMPORTANT:
-            // refresh stale references after async state update
-            const freshState = get();
-
-            draftLayout = freshState.draftLayout;
-            draftPlan = freshState.draftPlan;
-            currentGarden = freshState.currentGarden;
-          }
-
-          if (!draftPlan?.gardenId) {
+          if (typeof draftPlan.gardenId !== "string") {
             throw new Error("Garden must be created before saving plan");
           }
 
-          // ────────────────────────────────────────
-          // Prepare payload
-          // ────────────────────────────────────────
+          // ❗ тільки для API
+          const { name, ...layoutWithoutName } = draftLayout;
 
           const payload = {
             year: draftPlan.year,
-            layout: structuredClone(draftLayout),
-            plantings: structuredClone(draftPlan.plantings || {}),
+            layout: layoutWithoutName,
+            plantings: draftPlan.plantings,
             comment: "Manual save",
           };
 
           let result;
 
-          // ────────────────────────────────────────
-          // Update existing season
-          // ────────────────────────────────────────
-
           if (draftPlan.id) {
             result = await planService.updateSeasonPlan(draftPlan.id, payload);
           } else {
-            // ────────────────────────────────────────
-            // Create new season
-            // ────────────────────────────────────────
-
             result = await planService.createSeasonPlan({
               gardenId: draftPlan.gardenId,
               ...payload,
             });
           }
 
-          // 🔥 Refresh seasons list
-          await get().fetchSeasonPlans(draftPlan.gardenId);
-
-          // ────────────────────────────────────────
-          // Prepare clean clones BEFORE produce
-          // ────────────────────────────────────────
-
-          const nextCurrentLayout = structuredClone(draftLayout);
-
-          const nextCurrentPlan = {
-            ...structuredClone(draftPlan),
-
-            id: result._id,
-            gardenId: result.gardenId,
-            currentVersionId: result.currentVersionId,
-          };
-
-          const nextDraftLayout = structuredClone(nextCurrentLayout);
-
-          const nextDraftPlan = structuredClone(nextCurrentPlan);
-
-          // ────────────────────────────────────────
-          // Sync current ↔ draft
-          // ────────────────────────────────────────
+          const savedLayout = structuredClone(draftLayout);
 
           set(
             produce((state) => {
-              state.currentLayout = nextCurrentLayout;
-              state.currentPlan = nextCurrentPlan;
+              state.currentLayout = savedLayout;
 
-              state.draftLayout = nextDraftLayout;
-              state.draftPlan = nextDraftPlan;
+              state.draftLayout = structuredClone(savedLayout);
+
+              state.currentPlan = {
+                ...draftPlan,
+                id: result._id,
+                gardenId: result.gardenId,
+                currentVersionId:
+                  result.currentVersionId?._id ?? result.currentVersionId,
+              };
+
+              state.draftPlan = structuredClone(state.currentPlan);
 
               state.hasUnsavedChanges = false;
             }),
@@ -486,34 +440,6 @@ export const useGardenStore = create(
         const gardens = await gardenService.getGardens();
         set({ gardens });
         return gardens;
-      },
-
-      createGarden: async (title) => {
-        const garden = await gardenService.createGarden({ title });
-
-        const currentLayoutClone = structuredClone(get().currentLayout);
-
-        const currentPlanClone = structuredClone(get().currentPlan);
-
-        const initialLayoutClone = structuredClone(initialLayout);
-
-        set(
-          produce((state) => {
-            state.gardens.push(garden);
-            state.currentGarden = garden;
-            state.currentPlan = createEmptyPlan(garden._id);
-
-            if (!state.currentLayout) {
-              state.currentLayout = initialLayoutClone;
-            }
-
-            state.draftLayout = currentLayoutClone;
-            state.draftPlan = currentPlanClone;
-            state.hasUnsavedChanges = false;
-          }),
-        );
-
-        return garden;
       },
 
       setCurrentGarden: (garden) =>
@@ -541,16 +467,15 @@ export const useGardenStore = create(
           currentVersionId: seasonPlan.currentVersionId,
         };
 
-        const layoutClone = structuredClone(get().currentLayout);
-
-        const planClone = structuredClone(get().currentPlan);
+        const layoutClone = structuredClone(layout);
+        const planClone = structuredClone(plan);
 
         set({
-          currentLayout: layout,
-          currentPlan: plan,
+          currentLayout: layoutClone,
+          currentPlan: planClone,
 
-          draftLayout: layoutClone,
-          draftPlan: planClone,
+          draftLayout: structuredClone(layoutClone),
+          draftPlan: structuredClone(planClone),
 
           selected: null,
           hasUnsavedChanges: false,
@@ -676,6 +601,9 @@ export const useGardenStore = create(
 
             state.currentLayout = previewLayout;
             state.currentPlan = previewPlan;
+
+            state.draftLayout = structuredClone(previewLayout);
+            state.draftPlan = structuredClone(previewPlan);
           }),
         );
       },
@@ -695,8 +623,6 @@ export const useGardenStore = create(
 
             state.draftLayout = savedStateBeforePreview.draftLayout;
             state.draftPlan = savedStateBeforePreview.draftPlan;
-
-            //state.hasUnsavedChanges = false;
 
             state.savedStateBeforePreview = null;
           }),
@@ -783,18 +709,41 @@ export const useGardenStore = create(
         return newSeasonPlan;
       },
 
-      createNewGarden: async ({ title, firstYear }) => {
+      createNewGarden: async ({
+        title,
+        firstYear,
+        useCurrentDraft = false,
+      }) => {
+        const { draftLayout, draftPlan } = get();
+
         const garden = await gardenService.createGarden({ title });
+
+        let layout;
+        let plantings;
+
+        if (useCurrentDraft) {
+          layout = {
+            ...structuredClone(draftLayout),
+            id: draftLayout?.id || nanoid(),
+            name: title,
+          };
+
+          plantings = structuredClone(draftPlan?.plantings || {});
+        } else {
+          layout = {
+            ...structuredClone(initialLayout),
+            id: nanoid(),
+            name: title,
+          };
+
+          plantings = {};
+        }
 
         const firstSeasonPlan = await planService.createSeasonPlan({
           gardenId: garden._id,
           year: firstYear,
-          layout: {
-            ...initialLayout,
-            id: nanoid(),
-            name: title,
-          },
-          plantings: {},
+          layout,
+          plantings,
           comment: "Initial season",
         });
 
@@ -819,6 +768,8 @@ export const useGardenStore = create(
       partialize: (state) => ({
         currentLayout: state.currentLayout,
         currentPlan: state.currentPlan,
+        draftLayout: state.draftLayout,
+        draftPlan: state.draftPlan,
         currentGarden: state.currentGarden,
       }),
       skipHydration: false,

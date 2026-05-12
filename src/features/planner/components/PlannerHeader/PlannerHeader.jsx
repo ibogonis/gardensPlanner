@@ -20,7 +20,7 @@ export default function PlannerHeader() {
   const saveCurrentPlan = useGardenStore((state) => state.saveCurrentPlan);
   const updateGarden = useGardenStore((state) => state.updateGarden);
   const setYear = useGardenStore((state) => state.setYear);
-  const createGarden = useGardenStore((state) => state.createGarden);
+  const createNewGarden = useGardenStore((state) => state.createNewGarden);
   const reset = useGardenStore((state) => state.reset);
   const deleteGarden = useGardenStore((state) => state.deleteGarden);
 
@@ -72,12 +72,20 @@ setEditedYear(seasonYear);
   const handleSave = async () => {
   try {
     if (isBeforeFirstSave && editedName.trim()) {
-      await createGarden(editedName);
-    }
+  await createNewGarden({
+    title: editedName,
+    firstYear: Number(editedYear),
+    useCurrentDraft: true,
+  });
 
-    await saveCurrentPlan();
+  alert("Plan saved ✅");
+  return;
+}
 
-    alert("Plan saved ✅");
+await saveCurrentPlan();
+
+alert("Plan saved ✅");
+
   } catch (error) {
     console.error("Save failed:", error);
     alert(`Save failed ❌: ${error.message || error}`);
