@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGardenStore } from "../../store/useGardenStore";
 import styles from "./PlannerHeader.module.css";
 import NewSeasonModal from "./NewSeasonModal";
 import NewGardenModal from "./NewGardenModal";
+import DeleteGardenModal from "./DeleteGardenModal";
+
 
 export default function PlannerHeader() {
   const [isEditing, setIsEditing] = useState(false);
@@ -10,33 +12,48 @@ export default function PlannerHeader() {
   const [showNewGardenModal, setShowNewGardenModal] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedYear, setEditedYear] = useState("");
+  //const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteModalState, setDeleteModalState] =
+  useState({
+    isOpen: false,
+    isLastSeason: false,
+  });
 
+ 
   const currentPlan = useGardenStore((state) => state.currentPlan);
-  const currentLayout = useGardenStore((state) => state.currentLayout);
   const currentGarden = useGardenStore((state) => state.currentGarden);
+
   const saveCurrentPlan = useGardenStore((state) => state.saveCurrentPlan);
-  
-  const setLayoutName = useGardenStore((state) => state.setLayoutName);
+  const updateGarden = useGardenStore((state) => state.updateGarden);
   const setYear = useGardenStore((state) => state.setYear);
-  
+  const createNewGarden = useGardenStore((state) => state.createNewGarden);
   const reset = useGardenStore((state) => state.reset);
+  const deleteGarden = useGardenStore((state) => state.deleteGarden);
+  const deleteSeason = useGardenStore((state) => state.deleteSeason);
+  const seasonPlans = useGardenStore((state) => state.seasonPlans);
 
   // State 1: Before first save (no plan ID or default "plan-1")
   const isBeforeFirstSave = !currentPlan?.id || currentPlan.id === "plan-1";
 
-  const gardenName = currentLayout?.name || currentGarden?.title || "My garden";
+  const gardenName =  currentGarden?.title || "My garden";
   const seasonYear = currentPlan?.year || new Date().getFullYear();
 
+ useEffect(() => {
+setEditedName(gardenName);
+}, [gardenName]);
+
+useEffect(() => {
+setEditedYear(seasonYear);
+}, [seasonYear]);
+
   const handleEdit = () => {
-    setEditedName(gardenName);
-    setEditedYear(seasonYear);
     setIsEditing(true);
   };
 
   const handleSaveChanges = async () => {
   try {
     if (editedName !== gardenName) {
-      setLayoutName(editedName); 
+      await updateGarden({ title: editedName });
     }
 
     if (Number(editedYear) !== seasonYear) {
@@ -44,30 +61,96 @@ export default function PlannerHeader() {
     }
 
     await saveCurrentPlan(); 
-
+console.log("garden", currentGarden?.title);
+console.log("layout", currentPlan);
     setIsEditing(false);
     alert("Changes saved ✅");
   } catch (error) {
     console.error("Failed to save changes:", error);
     alert(`Failed to save changes: ${error.message}`);
-    setEditedName(gardenName);
-    setEditedYear(seasonYear);
   }
 };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setEditedName(gardenName);
+setEditedYear(seasonYear);
   };
 
   const handleSave = async () => {
-    try {
-      await saveCurrentPlan();
-      alert("Plan saved ✅");
-    } catch (error) {
-      console.error("Save failed:", error);
-      alert(`Save failed ❌: ${error.message || error}`);
-    }
-  };
+  try {
+    if (isBeforeFirstSave && editedName.trim()) {
+  await createNewGarden({
+    title: editedName,
+    firstYear: Number(editedYear),
+    useCurrentDraft: true,
+  });
+
+  alert("Plan saved ✅");
+  return;
+}
+
+await saveCurrentPlan();
+
+alert("Plan saved ✅");
+
+  } catch (error) {
+    console.error("Save failed:", error);
+    alert(`Save failed ❌: ${error.message || error}`);
+  }
+};
+
+const handleDelete = () => {
+  setDeleteModalState({
+    isOpen: true,
+    isLastSeason: seasonPlans.length === 1,
+  });
+};
+
+const handleDeleteSeason = async () => {
+  try {
+    await deleteSeason(currentPlan.id);
+
+    alert("Season deleted ✅");
+  } catch (error) {
+    console.error(
+      "Failed to delete season:",
+      error,
+    );
+
+    alert(
+      `Failed to delete season: ${
+        error.message || error
+      }`,
+    );
+  }
+};
+
+const handleDeleteGarden = async () => {
+  try {
+    await deleteGarden(currentGarden._id);
+
+    alert("Garden deleted ✅");
+  } catch (error) {
+    console.error(
+      "Failed to delete garden:",
+      error,
+    );
+
+    alert(
+      `Failed to delete garden: ${
+        error.message || error
+      }`,
+    );
+  }
+};
+
+const closeDeleteModal = () => {
+  setDeleteModalState({
+    isOpen: false,
+    isLastSeason: false,
+  });
+};
 
   // State 1: Before first save
   if (isBeforeFirstSave) {
@@ -77,12 +160,10 @@ export default function PlannerHeader() {
           <div className={styles.field}>
             <label>Name your garden</label>
             <input
-              type="text"
-              value={gardenName}
-              onChange={(e) => useGardenStore.getState().setLayoutName(e.target.value)}
-              className={styles.input}
-              maxLength={80}
-            />
+  type="text"
+  value={editedName}
+  onChange={(e) => setEditedName(e.target.value)}
+/>
           </div>
           <div className={styles.field}>
             <label>Year</label>
@@ -91,8 +172,8 @@ export default function PlannerHeader() {
               min="2000"
               max="2099"
               step="1"
-              value={seasonYear}
-              onChange={(e) => useGardenStore.getState().setYear(Number(e.target.value))}
+              value={editedYear}
+              onChange={(e) => setEditedYear(e.target.value)}
               className={styles.input}
             />
           </div>
@@ -196,6 +277,9 @@ export default function PlannerHeader() {
               <button onClick={handleSave} className={styles.buttonPrimary}>
                 Save
               </button>
+              <button onClick={handleDelete} className={styles.buttonPrimary}>
+                Delete
+              </button>
             </>
           )}
         </div>
@@ -208,6 +292,14 @@ export default function PlannerHeader() {
       {showNewGardenModal && (
         <NewGardenModal onClose={() => setShowNewGardenModal(false)} />
       )}
+
+      {deleteModalState.isOpen && (<DeleteGardenModal
+  isOpen={deleteModalState.isOpen}
+  onClose={closeDeleteModal}
+  isLastSeason={deleteModalState.isLastSeason}
+  onDeleteSeason={handleDeleteSeason}
+  onDeleteGarden={handleDeleteGarden}
+/>)}
     </>
   );
 }

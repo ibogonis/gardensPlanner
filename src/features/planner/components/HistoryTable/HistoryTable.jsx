@@ -23,39 +23,36 @@ export function HistoryTable() {
   const restoreVersion = useGardenStore((state) => state.restoreVersion);
   const getVersionHistory = useGardenStore((state) => state.getVersionHistory);
 
-  // Load gardens on mount and version history if plan exists
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        await fetchGardens();
-        
-        // If there's already a current plan (from persisted state), load its version history
-        if (currentPlan?.id) {
-          await getVersionHistory(currentPlan.id);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [fetchGardens, getVersionHistory, currentPlan?.id]);
+  const loadGardens = async () => {
+    try {
+      setLoading(true);
+      await fetchGardens();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Refresh version history when currentVersionId changes (after save)
-  useEffect(() => {
-    const refreshVersionHistory = async () => {
-      if (currentPlan?.id && currentPlan?.currentVersionId) {
-        try {
-          await getVersionHistory(currentPlan.id);
-        } catch (err) {
-          console.error("Failed to refresh version history:", err);
-        }
-      }
-    };
-    refreshVersionHistory();
-  }, [currentPlan?.currentVersionId, currentPlan?.id, getVersionHistory]);
+  loadGardens();
+}, [fetchGardens]);
+
+useEffect(() => {
+  const loadHistory = async () => {
+    if (!currentPlan?.id) return;
+
+    try {
+      await getVersionHistory(currentPlan.id);
+    } catch (err) {
+      console.error("Failed to load version history:", err);
+    }
+  };
+
+  loadHistory();
+}, [currentPlan?.id, getVersionHistory]);
+
+
 
   const handleGardenChange = async (e) => {
     const gardenId = e.target.value;
@@ -168,7 +165,7 @@ export function HistoryTable() {
           className={styles.select}
           disabled={loading}
         >
-          <option value="">Select a garden</option>
+          <option value="" disabled>Select a garden</option>
           {gardens.map((garden) => (
             <option key={garden._id} value={garden._id}>
               {garden.title}
@@ -187,7 +184,7 @@ export function HistoryTable() {
             className={styles.select}
             disabled={loading}
           >
-            <option value="">Select a season</option>
+            <option value="" disabled>Select a season</option>
             {seasonPlans?.map((plan) => (
               <option key={plan._id} value={plan._id}>
                 {plan.year}

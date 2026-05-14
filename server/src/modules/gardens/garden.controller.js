@@ -346,7 +346,6 @@ exports.deleteSeasonPlan = async (req, res) => {
       return res.status(404).json({ message: "Season plan not found" });
     }
 
-    // Verify user has access to the garden
     const garden = await Garden.findOne({
       _id: seasonPlan.gardenId,
       "members.userId": userId,
@@ -359,10 +358,18 @@ exports.deleteSeasonPlan = async (req, res) => {
         .json({ message: "Access denied or insufficient permissions" });
     }
 
-    // Delete all versions for this season plan
+    const seasonCount = await SeasonPlan.countDocuments({
+      gardenId: seasonPlan.gardenId,
+    });
+
+    if (seasonCount <= 1) {
+      return res.status(409).json({
+        message: "Cannot delete the last season. Delete the garden instead.",
+      });
+    }
+
     await Version.deleteMany({ seasonPlanId: id });
 
-    // Delete season plan
     await SeasonPlan.findByIdAndDelete(id);
 
     res.json({ message: "Season plan and all versions deleted" });

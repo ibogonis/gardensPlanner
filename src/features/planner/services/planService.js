@@ -25,6 +25,11 @@ export const planService = {
     return response.data;
   },
 
+  deleteSeasonPlan: async (id) => {
+    const response = await axios.delete(`/api/gardens/season-plans/${id}`);
+    return response.data;
+  },
+
   // Get version history
   async getVersionHistory(seasonPlanId) {
     const response = await axios.get(

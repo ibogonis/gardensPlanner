@@ -5,9 +5,10 @@ import styles from "./Modal.module.css";
 export default function NewSeasonModal({ onClose }) {
   const currentPlan = useGardenStore((state) => state.currentPlan);
   const createNewSeason = useGardenStore((state) => state.createNewSeason);
-
-  const currentYear = currentPlan?.year || new Date().getFullYear();
-  const [year, setYear] = useState(currentYear + 1);
+  const seasonPlans = useGardenStore((state) => state.seasonPlans);
+ //const currentYear = currentPlan?.year || new Date().getFullYear();
+  const latestYear = Math.max(...seasonPlans.map((plan) => plan.year));
+  const [year, setYear] = useState(latestYear + 1);
   const [layoutSource, setLayoutSource] = useState("copy");
 
   const handleCreate = async () => {
@@ -52,7 +53,7 @@ export default function NewSeasonModal({ onClose }) {
                 checked={layoutSource === "copy"}
                 onChange={(e) => setLayoutSource(e.target.value)}
               />
-              <span>Copy layout from {currentYear}</span>
+              <span>Copy layout from {currentPlan?.year}</span>
             </label>
             <label className={styles.radio}>
               <input
