@@ -3,7 +3,7 @@ import { useGardenStore } from "../../store/useGardenStore";
 import styles from "./PlannerHeader.module.css";
 import NewSeasonModal from "./NewSeasonModal";
 import NewGardenModal from "./NewGardenModal";
-
+import DeleteGardenModal from "./DeleteGardenModal";
 
 
 export default function PlannerHeader() {
@@ -12,6 +12,12 @@ export default function PlannerHeader() {
   const [showNewGardenModal, setShowNewGardenModal] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedYear, setEditedYear] = useState("");
+  //const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteModalState, setDeleteModalState] =
+  useState({
+    isOpen: false,
+    isLastSeason: false,
+  });
 
  
   const currentPlan = useGardenStore((state) => state.currentPlan);
@@ -23,6 +29,8 @@ export default function PlannerHeader() {
   const createNewGarden = useGardenStore((state) => state.createNewGarden);
   const reset = useGardenStore((state) => state.reset);
   const deleteGarden = useGardenStore((state) => state.deleteGarden);
+  const deleteSeason = useGardenStore((state) => state.deleteSeason);
+  const seasonPlans = useGardenStore((state) => state.seasonPlans);
 
   // State 1: Before first save (no plan ID or default "plan-1")
   const isBeforeFirstSave = !currentPlan?.id || currentPlan.id === "plan-1";
@@ -90,6 +98,58 @@ alert("Plan saved ✅");
     console.error("Save failed:", error);
     alert(`Save failed ❌: ${error.message || error}`);
   }
+};
+
+const handleDelete = () => {
+  setDeleteModalState({
+    isOpen: true,
+    isLastSeason: seasonPlans.length === 1,
+  });
+};
+
+const handleDeleteSeason = async () => {
+  try {
+    await deleteSeason(currentPlan.id);
+
+    alert("Season deleted ✅");
+  } catch (error) {
+    console.error(
+      "Failed to delete season:",
+      error,
+    );
+
+    alert(
+      `Failed to delete season: ${
+        error.message || error
+      }`,
+    );
+  }
+};
+
+const handleDeleteGarden = async () => {
+  try {
+    await deleteGarden(currentGarden._id);
+
+    alert("Garden deleted ✅");
+  } catch (error) {
+    console.error(
+      "Failed to delete garden:",
+      error,
+    );
+
+    alert(
+      `Failed to delete garden: ${
+        error.message || error
+      }`,
+    );
+  }
+};
+
+const closeDeleteModal = () => {
+  setDeleteModalState({
+    isOpen: false,
+    isLastSeason: false,
+  });
 };
 
   // State 1: Before first save
@@ -217,7 +277,7 @@ alert("Plan saved ✅");
               <button onClick={handleSave} className={styles.buttonPrimary}>
                 Save
               </button>
-              <button onClick={() => deleteGarden(currentGarden._id)} className={styles.buttonPrimary}>
+              <button onClick={handleDelete} className={styles.buttonPrimary}>
                 Delete
               </button>
             </>
@@ -232,6 +292,14 @@ alert("Plan saved ✅");
       {showNewGardenModal && (
         <NewGardenModal onClose={() => setShowNewGardenModal(false)} />
       )}
+
+      {deleteModalState.isOpen && (<DeleteGardenModal
+  isOpen={deleteModalState.isOpen}
+  onClose={closeDeleteModal}
+  isLastSeason={deleteModalState.isLastSeason}
+  onDeleteSeason={handleDeleteSeason}
+  onDeleteGarden={handleDeleteGarden}
+/>)}
     </>
   );
 }

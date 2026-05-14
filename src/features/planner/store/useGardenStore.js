@@ -566,6 +566,35 @@ export const useGardenStore = create(
         }
       },
 
+      deleteSeason: async (seasonPlanId) => {
+        const { currentGarden, seasonPlans } = get();
+
+        if (!currentGarden || !seasonPlans) return;
+
+        if (seasonPlans.length === 1) {
+          await get().deleteGarden(currentGarden._id);
+          return;
+        }
+
+        await planService.deleteSeasonPlan(seasonPlanId);
+
+        const remainingPlans = seasonPlans.filter(
+          (p) => p._id !== seasonPlanId,
+        );
+
+        set({ seasonPlans: remainingPlans });
+
+        const nextSeason = remainingPlans[0];
+
+        if (!nextSeason) {
+          throw new Error(
+            "Invariant violated: garden must contain at least one season",
+          );
+        }
+
+        await get().selectPlan(nextSeason._id);
+      },
+
       // ─────────────────────────────────────────────────────────
       // Preview Mode
       // ─────────────────────────────────────────────────────────
