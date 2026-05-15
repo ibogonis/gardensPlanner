@@ -55,15 +55,6 @@ const initialState = {
   hasUnsavedChanges: false,
 };
 
-const ensureLayout = (state) => {
-  if (!state.currentLayout) {
-    state.currentLayout = { ...initialLayout };
-  }
-  if (!state.currentLayout.shapes) {
-    state.currentLayout.shapes = {};
-  }
-};
-
 export const useGardenStore = create(
   persist(
     (set, get) => ({
@@ -276,11 +267,15 @@ export const useGardenStore = create(
         );
       },
 
-      transformCircleShape: (node, id) =>
+      transformCircleShape: (node, id) => {
+        const { draftLayout, currentLayout } = get();
+        const baseLayout = draftLayout ?? structuredClone(currentLayout);
         set(
           produce((state) => {
-            ensureLayout(state);
-            const shape = state.currentLayout.shapes[id];
+            if (!state.draftLayout) {
+              state.draftLayout = baseLayout;
+            }
+            const shape = state.draftLayout.shapes[id];
             if (!shape) return;
 
             const scaleX = node.scaleX();
@@ -295,8 +290,10 @@ export const useGardenStore = create(
               LIMITS.CIRCLE.MIN,
               LIMITS.CIRCLE.MAX,
             );
+            state.hasUnsavedChanges = true;
           }),
-        ),
+        );
+      },
 
       setPlanting: (shapeId, crop) => {
         const { draftPlan, currentPlan } = get();
