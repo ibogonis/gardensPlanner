@@ -532,7 +532,6 @@ export const useGardenStore = create(
       },
 
       deleteGarden: async (gardenId) => {
-        if (!window.confirm("Delete this garden?")) return;
         await gardenService.deleteGarden(gardenId);
 
         const remainingGardens = get().gardens.filter(
